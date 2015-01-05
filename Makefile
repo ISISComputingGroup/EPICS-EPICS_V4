@@ -2,6 +2,8 @@ install : default
 
 uninstall :
 
+doxygen :
+
 default: base helloWorld
 
 base : pvCommon pvData pvAccess pvaSrv pvDatabase nt
