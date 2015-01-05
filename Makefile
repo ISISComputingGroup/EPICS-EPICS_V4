@@ -44,7 +44,7 @@ clean :
 	make -C normativeTypesCPP clean
 	make -C exampleCPP/HelloWorld clean
 	make -C exampleCPP/ChannelArchiverService clean
-	make -C pvaPy clean
+#	make -C pvaPy clean
 
 distclean : clean config_clean 
 
