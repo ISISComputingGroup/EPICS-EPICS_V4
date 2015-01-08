@@ -4994,7 +4994,7 @@ TODO
             osiSockAddr m_localBroadcastAddress;
         };
 
-        epicsShareExtern ClientContextImpl::shared_pointer createClientContextImpl()
+        ClientContextImpl::shared_pointer createClientContextImpl()
         {
             ClientContextImpl::shared_pointer ptr = InternalClientContextImpl::create();
             return ptr;
