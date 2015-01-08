@@ -21,7 +21,6 @@
 #include <pv/alarm.h>
 #include <pv/pvTimeStamp.h>
 #include <pv/pvAlarm.h>
-#include <pv/pvDatabase.h>
 
 #ifdef powerSupplyEpicsExportSharedSymbols
 #   define epicsExportSharedSymbols
@@ -30,6 +29,7 @@
 
 #include <shareLib.h>
 
+#include <pv/pvDatabase.h>
 
 namespace epics { namespace pvDatabase { 
 
