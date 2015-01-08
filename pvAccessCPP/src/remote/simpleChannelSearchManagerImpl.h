@@ -21,6 +21,8 @@
 #	undef simpleChannelSearchManagerEpicsExportSharedSymbols
 #endif
 
+#include <shareLib.h>
+
 #include <pv/channelSearchManager.h>
 
 namespace epics {

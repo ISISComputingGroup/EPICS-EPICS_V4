@@ -8,9 +8,10 @@
 #include <time.h>
 #include <vector>
 
+#include <pv/timeStamp.h>
+
 #define epicsExportSharedSymbols
 
-#include <pv/timeStamp.h>
 #include <pv/simpleChannelSearchManagerImpl.h>
 #include <pv/pvaConstants.h>
 #include <pv/blockingUDP.h>
