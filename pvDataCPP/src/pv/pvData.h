@@ -410,6 +410,24 @@ private:
     friend class PVDataCreate;
 };
 
+    template<>
+    inline std::ostream& PVScalarValue<int8>::dumpValue(std::ostream& o) const
+    {
+        return o << static_cast<int>(get());
+    }
+
+    template<>
+    inline std::ostream& PVScalarValue<uint8>::dumpValue(std::ostream& o) const
+    {
+    	return o << static_cast<unsigned int>(get());
+    }
+
+    template<>
+    inline std::ostream& PVScalarValue<boolean>::dumpValue(std::ostream& o) const
+    {
+        return o << std::boolalpha << static_cast<bool>(get());
+    }
+
 /**
  * typedefs for the various possible scalar types.
  */

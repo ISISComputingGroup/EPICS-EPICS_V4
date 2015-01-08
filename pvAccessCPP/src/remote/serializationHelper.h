@@ -24,6 +24,8 @@
 #	undef serializationHelperEpicsExportSharedSymbols
 #endif
 
+#include <shareLib.h>
+
 #include <pv/pvaConstants.h>
 #include <pv/pvAccess.h>
 

@@ -19,12 +19,13 @@
 #	undef clientContextImplEpicsExportSharedSymbols
 #endif
 
+#include <shareLib.h>
+
 #include <pv/pvAccess.h>
 #include <pv/remote.h>
 #include <pv/channelSearchManager.h>
 #include <pv/inetAddressUtil.h>
 
-#include <shareLib.h>
 
 class ChannelSearchManager;
 

@@ -34,7 +34,7 @@ namespace epics {
         
         static pvAccessLogLevel g_pvAccessLogLevel = logLevelInfo;
         
-        void pvAccessLog(pvAccessLogLevel level, const char* format, ...)
+        epicsShareExtern void pvAccessLog(pvAccessLogLevel level, const char* format, ...)
         {
             // TODO lock
             if (level >= g_pvAccessLogLevel)
@@ -56,12 +56,12 @@ namespace epics {
             }
         }
 
-        void pvAccessSetLogLevel(pvAccessLogLevel level)
+        epicsShareExtern void pvAccessSetLogLevel(pvAccessLogLevel level)
         {
             g_pvAccessLogLevel = level;
         }
 
-        bool pvAccessIsLoggable(pvAccessLogLevel level)
+        epicsShareExtern bool pvAccessIsLoggable(pvAccessLogLevel level)
         {
             return level >= g_pvAccessLogLevel;
         }
@@ -100,7 +100,7 @@ namespace epics {
             delete fileLogger;
         }
 
-        void createFileLogger(std::string const & fname) {
+        epicsShareExtern void createFileLogger(std::string const & fname) {
             static Mutex mutex;
             Lock xx(mutex);
 

@@ -20,6 +20,8 @@
 #	undef baseChannelRequesterEpicsExportSharedSymbols
 #endif
 
+#include <shareLib.h>
+
 #include <pv/serverContext.h>
 #include <pv/serverChannelImpl.h>
 

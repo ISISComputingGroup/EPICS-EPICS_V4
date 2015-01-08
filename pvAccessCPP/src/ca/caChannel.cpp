@@ -6,9 +6,9 @@
 
 #include <epicsVersion.h>
 
+#define epicsExportSharedSymbols
 #include <pv/logger.h>
 #include <pv/standardField.h>
-
 #include <pv/caChannel.h>
 
 using namespace epics::pvData;

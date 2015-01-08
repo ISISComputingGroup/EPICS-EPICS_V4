@@ -22,6 +22,14 @@
 #include <epicsTime.h>
 #include <epicsThread.h>
 
+
+#ifdef abstractCodecEpicsExportSharedSymbols
+#   define epicsExportSharedSymbols
+#	undef abstractCodecEpicsExportSharedSymbols
+#endif
+
+#include <shareLib.h>
+
 #include <pv/byteBuffer.h>
 #include <pv/pvType.h>
 #include <pv/lock.h>
@@ -29,10 +37,6 @@
 #include <pv/event.h>
 #include <pv/likely.h>
 
-#ifdef abstractCodecEpicsExportSharedSymbols
-#   define epicsExportSharedSymbols
-#	undef abstractCodecEpicsExportSharedSymbols
-#endif
 
 #include <pv/pvaConstants.h>
 #include <pv/remote.h>
@@ -42,7 +46,6 @@
 #include <pv/namedLockPattern.h>
 #include <pv/inetAddressUtil.h>
 
-#include <shareLib.h>
 
 namespace epics {
   namespace pvAccess {

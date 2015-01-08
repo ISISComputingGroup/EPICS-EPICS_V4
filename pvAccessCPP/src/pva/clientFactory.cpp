@@ -5,11 +5,11 @@
  */
  
 #include <pv/lock.h>
-#include <pv/logger.h>
 
 #include <epicsSignal.h>
 
 #define epicsExportSharedSymbols
+#include <pv/logger.h>
 #include <pv/clientFactory.h>
 #include <pv/clientContextImpl.h>
 

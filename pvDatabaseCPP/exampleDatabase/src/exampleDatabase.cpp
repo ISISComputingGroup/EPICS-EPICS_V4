@@ -22,13 +22,15 @@
 
 #include <pv/standardField.h>
 #include <pv/standardPVField.h>
+
+#define epicsExportSharedSymbols
+
 #include <pv/channelProviderLocal.h>
 #include <pv/recordList.h>
 #include <pv/traceRecord.h>
 
 #include <pv/powerSupply.h>
 
-#define epicsExportSharedSymbols
 #include <pv/exampleDatabase.h>
 
 using namespace std;

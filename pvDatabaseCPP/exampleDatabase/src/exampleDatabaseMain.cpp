@@ -19,9 +19,11 @@
 #include <vector>
 #include <iostream>
 
-#include <pv/channelProviderLocal.h>
 #include <pv/serverContext.h>
 
+#include <epicsExport.h>
+
+#include <pv/channelProviderLocal.h>
 #include <pv/exampleDatabase.h>
 #include <pv/exampleMonitorPlugin.h>
 

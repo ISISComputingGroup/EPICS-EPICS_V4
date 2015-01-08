@@ -13,28 +13,31 @@
 #include <pv/lock.h>
 #include <pv/timer.h>
 #include <pv/bitSetUtil.h>
-#include <pv/serializationHelper.h>
 #include <pv/convert.h>
 #include <pv/queue.h>
 #include <pv/standardPVField.h>
+
+#define epicsExportSharedSymbols
 
 #include <pv/pvAccess.h>
 #include <pv/pvaConstants.h>
 #include <pv/blockingUDP.h>
 #include <pv/blockingTCP.h>
 #include <pv/namedLockPattern.h>
+#include <pv/serializationHelper.h>
 #include <pv/inetAddressUtil.h>
 #include <pv/hexDump.h>
 #include <pv/remote.h>
 #include <pv/channelSearchManager.h>
 #include <pv/simpleChannelSearchManagerImpl.h>
-#include <pv/clientContextImpl.h>
 #include <pv/configuration.h>
 #include <pv/beaconHandler.h>
 #include <pv/logger.h>
 #include <pv/security.h>
 
 #include <pv/pvAccessMB.h>
+
+#include <pv/clientContextImpl.h>
 
 //#include <tr1/unordered_map>
 
@@ -4991,7 +4994,7 @@ TODO
             osiSockAddr m_localBroadcastAddress;
         };
 
-        ClientContextImpl::shared_pointer createClientContextImpl()
+        epicsShareExtern ClientContextImpl::shared_pointer createClientContextImpl()
         {
             ClientContextImpl::shared_pointer ptr = InternalClientContextImpl::create();
             return ptr;

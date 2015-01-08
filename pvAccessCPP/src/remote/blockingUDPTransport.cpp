@@ -9,6 +9,7 @@
 #include <Ws2tcpip.h>
 #endif
 
+#define epicsExportSharedSymbols
 #include <pv/blockingUDP.h>
 #include <pv/pvaConstants.h>
 #include <pv/inetAddressUtil.h>

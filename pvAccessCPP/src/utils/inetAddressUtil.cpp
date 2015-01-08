@@ -175,7 +175,7 @@ InetAddrVector* getSocketAddressList(const std::string & list, int defaultPort,
     return iav;
 }
 
-string inetAddressToString(const osiSockAddr &addr,
+std::string inetAddressToString(const osiSockAddr &addr,
         bool displayPort, bool displayHex) {
     stringstream saddr;
 

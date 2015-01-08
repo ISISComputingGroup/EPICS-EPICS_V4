@@ -27,9 +27,10 @@
 #include <pv/standardPVField.h>
 #include <pv/pvData.h>
 #include <pv/pvAccess.h>
-#include "powerSupply.h"
 
 #include <epicsExport.h>
+
+#include "powerSupply.h"
 
 using namespace std;
 using std::tr1::static_pointer_cast;
