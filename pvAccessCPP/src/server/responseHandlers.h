@@ -19,6 +19,8 @@
 #	undef responseHandlersEpicsExportSharedSymbols
 #endif
 
+#include <shareLib.h>
+
 #include <pv/serverContext.h>
 #include <pv/remote.h>
 #include <pv/serverChannelImpl.h>

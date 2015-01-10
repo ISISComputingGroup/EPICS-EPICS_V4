@@ -423,7 +423,7 @@ namespace epics {
     };
 
 
-    class  BlockingTCPTransportCodec :
+    class epicsShareClass BlockingTCPTransportCodec :
       public BlockingSocketAbstractCodec,
       public SecurityPluginControl
     

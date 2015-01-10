@@ -29,6 +29,8 @@
 #	undef introspectionRegistryEpicsExportSharedSymbols
 #endif
 
+#include <shareLib.h>
+
 // TODO check for memory leaks
 
 namespace epics {

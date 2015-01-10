@@ -99,7 +99,7 @@ namespace epics {
 
         };
 
-        class ResponseHandlerFactory
+        class epicsShareClass ResponseHandlerFactory
         {
             public:
         	POINTER_DEFINITIONS(ResponseHandlerFactory);

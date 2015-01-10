@@ -19,11 +19,12 @@
 #	undef rpcServerEpicsExportSharedSymbols
 #endif
 
+#include <shareLib.h>
+
 #include <pv/pvAccess.h>
 #include <pv/rpcService.h>
 #include <pv/serverContext.h>
 
-#include <shareLib.h>
 
 namespace epics { namespace pvAccess { 
 

@@ -30,6 +30,8 @@
 #	undef remoteEpicsExportSharedSymbols
 #endif
 
+#include <shareLib.h>
+
 #include <pv/pvaConstants.h>
 #include <pv/configuration.h>
 
@@ -125,7 +127,7 @@ namespace epics {
         /**
          * Interface defining transport send control.
          */
-        class TransportSendControl : public epics::pvData::SerializableControl {
+        class epicsShareClass TransportSendControl : public epics::pvData::SerializableControl {
         public:
         	POINTER_DEFINITIONS(TransportSendControl);
             
@@ -142,7 +144,7 @@ namespace epics {
         /**
          * Interface defining transport sender (instance sending data over transport).
          */
-        class TransportSender : public Lockable {
+        class epicsShareClass TransportSender : public Lockable {
         public:
         	POINTER_DEFINITIONS(TransportSender);
 
@@ -165,7 +167,7 @@ namespace epics {
         /**
          * Interface defining transport (connection).
          */
-        class Transport : public epics::pvData::DeserializableControl {
+        class epicsShareClass Transport : public epics::pvData::DeserializableControl {
         public:
         	POINTER_DEFINITIONS(Transport);
 
@@ -314,7 +316,7 @@ namespace epics {
         /**
          * Not public IF, used by Transports, etc.
          */
-        class Context {
+        class epicsShareClass Context {
         public:
         	POINTER_DEFINITIONS(Context);
 
@@ -483,7 +485,7 @@ namespace epics {
         /**
          * Interface defining a transport that hosts server channels.
          */
-        class ChannelHostingTransport {
+        class epicsShareClass ChannelHostingTransport {
         public:
         	POINTER_DEFINITIONS(ChannelHostingTransport);
 
