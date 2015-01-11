@@ -15,7 +15,7 @@
 #ifndef PVTYPE_H
 #define PVTYPE_H
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_MINGW)
 #define NOMINMAX
 #pragma warning(disable: 4251)
 #endif

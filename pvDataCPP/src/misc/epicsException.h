@@ -34,7 +34,7 @@
 #ifndef EPICSEXCEPTION_H_
 #define EPICSEXCEPTION_H_
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_MINGW)
 #pragma warning( push )
 #pragma warning(disable: 4275) // warning C4275: non dll-interface class used as base for dll-interface class (std::logic_error)
 #endif
@@ -58,7 +58,7 @@
 #  include <execinfo.h>
 #  include <cxxabi.h>
 #  define EXCEPT_USE_BACKTRACE
-#elif defined(_WIN32) && !defined(__MINGW__) && !defined(SKIP_DBGHELP)
+#elif defined(_WIN32) && !defined(_MINGW) && !defined(SKIP_DBGHELP)
 #  define _WINSOCKAPI_
 #  include <windows.h>
 #  include <dbghelp.h>
@@ -215,7 +215,7 @@ private:
     mutable std::string base_msg;
 };
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_MINGW)
 #pragma warning( pop )
 #endif
 

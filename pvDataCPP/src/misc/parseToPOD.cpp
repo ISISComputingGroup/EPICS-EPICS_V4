@@ -249,9 +249,9 @@ epicsParseFloat(const char *str, float *to, char **units)
 }
 #endif
 
-// MS Visual Studio 2013 defines strtoll, etc.
+// MS Visual Studio 2013 and MinGW define strtoll, etc.
 #if defined(_WIN32)
-#  if (_MSC_VER >= 1800)
+#  if (_MSC_VER >= 1800) || defined(_MINGW)
 #    define WIN_NEEDS_OLL_FUNC 0
 #  else
 #    define WIN_NEEDS_OLL_FUNC 1
