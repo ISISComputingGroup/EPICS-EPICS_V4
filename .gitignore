@@ -9,3 +9,8 @@ envPaths
 cdCommands
 dllPath.bat
 runIoc.bat
+bin/
+lib/
+include/
+db/
+dbd/
