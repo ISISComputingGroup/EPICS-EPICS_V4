@@ -16,3 +16,4 @@ lib/
 include/
 db/
 dbd/
+.project
