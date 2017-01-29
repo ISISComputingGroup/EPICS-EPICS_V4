@@ -60,8 +60,13 @@ PYTHON_TARGETS = host.pvaPy
 SPHINX_TARGETS = sphinx.pvaPy
 RUNTESTS_TARGETS = $(MODULES:%=runtests.%)
 TAPFILES_TARGETS = $(MODULES:%=tapfiles.%)
-CLEAN_TARGETS = $(MODULES:%=clean.%) clean.pvaPy
-DISTCLEAN_TARGETS = $(MODULES:%=distclean.%) distclean.pvaPy
+CLEAN_TARGETS = $(MODULES:%=clean.%)
+DISTCLEAN_TARGETS = $(MODULES:%=distclean.%)
+ifneq ("$(wildcard pvaPy/configure/RELEASE.local)","")
+CLEAN_TARGETS += clean.pvaPy
+DISTCLEAN_TARGETS += distclean.pvaPy
+endif
+
 CLEAN_DEP = $(filter clean distclean,$(MAKECMDGOALS))
 CONFIG_TARGETS = $(MODULES:%=config.%) $(foreach module, $(MODULES), \
     $(foreach top, $($(module)_CONTAINS_TOPS), config.$(module)/$(top)))
@@ -78,6 +83,7 @@ runtests: $(RUNTESTS_TARGETS)
 tapfiles: $(TAPFILES_TARGETS)
 clean: $(CLEAN_TARGETS)
 distclean: $(DISTCLEAN_TARGETS) deconf
+uninstall: distclean
 rebuild: clean
 	$(MAKE) all
 config: $(CONFIG_TARGETS)
