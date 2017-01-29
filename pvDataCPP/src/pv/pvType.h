@@ -1,8 +1,7 @@
 /* pvType.h */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
@@ -15,15 +14,19 @@
 #ifndef PVTYPE_H
 #define PVTYPE_H
 
-#if defined(_WIN32) && !defined(_MINGW)
+#if defined(_WIN32) && !defined(NOMINMAX)
 #define NOMINMAX
+#endif
+
+#if defined(_WIN32) && !defined(_MINGW)
+#pragma warning( push )
 #pragma warning(disable: 4251)
 #endif
 
 #include <string>
 #include <vector>
 
-#if defined(__vxworks) && \
+#if defined(vxWorks) && \
     (_WRS_VXWORKS_MAJOR+0 <= 6) && (_WRS_VXWORKS_MINOR+0 < 9)
 typedef int intptr_t;
 typedef unsigned int uintptr_t;
@@ -49,11 +52,11 @@ namespace detail {
 }
 
 /**
- * This is a set of typdefs used by pvData.
+ * This is a set of typedefs used by pvData.
  */
 
 /**
- * boolean, i.e. can only have the values {@code false} or {@code true}
+ * boolean, i.e. can only have the values @c false or @c true
  */
 typedef detail::pick_type<int8_t, signed char,
                           detail::pick_type<uint8_t, char, unsigned char>::type
@@ -126,7 +129,9 @@ typedef std::vector<std::string>::iterator StringArray_iterator;
 typedef std::vector<std::string>::const_iterator StringArray_const_iterator;
 
 }}
+
+#if defined(_WIN32) && !defined(_MINGW)
+#pragma warning( pop )
+#endif
+
 #endif  /* PVTYPE_H */
-
-
-

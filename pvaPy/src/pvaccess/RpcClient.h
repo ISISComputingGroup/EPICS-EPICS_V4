@@ -1,3 +1,6 @@
+// Copyright information and license terms for this software can be
+// found in the file LICENSE that is included with the distribution
+
 #ifndef RPC_CLIENT_H
 #define RPC_CLIENT_H
 
@@ -17,13 +20,16 @@ public:
     static const int DefaultTimeout;
 
     RpcClient(const std::string& channelName);
+#if defined PVA_RPC_API_VERSION && PVA_RPC_API_VERSION == 460
+    RpcClient(const std::string& channelName, const PvObject& pvRequestObject);
+#endif
     RpcClient(const RpcClient& pvaRpcClient);
     std::string getChannelName() const;
 
     virtual ~RpcClient();
     virtual epics::pvData::PVStructurePtr request(const epics::pvData::PVStructurePtr& pvRequest, double timeout=DefaultTimeout);
     //virtual PvObject* request(const PvObject& pvObject, double timeout=DefaultTimeout);
-    virtual PvObject* invoke(const PvObject& pvObject);
+    virtual PvObject* invoke(const PvObject& pvArgumentObject);
 
 private:
     static epics::pvAccess::RPCClient::shared_pointer createRpcClient(const std::string& channelName, const epics::pvData::PVStructurePtr& pvRequest, double timeout=DefaultTimeout);
@@ -32,6 +38,7 @@ private:
     bool rpcClientInitialized;
     epics::pvAccess::RPCClient::shared_pointer rpcClient;
     std::string channelName;
+    epics::pvData::PVStructure::shared_pointer pvRequest;
 };
 
 inline std::string RpcClient::getChannelName() const

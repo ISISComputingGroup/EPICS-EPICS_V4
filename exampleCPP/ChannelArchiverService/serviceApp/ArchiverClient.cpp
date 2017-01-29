@@ -1,8 +1,5 @@
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS exampleCPP is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
- */
+// Copyright information and license terms for this software can be
+// found in the file LICENSE that is included with the distribution
 
 #include <algorithm>
 #include <cstdio>
@@ -63,17 +60,17 @@ PVStructurePtr createRequest(const std::string & path,
     PVStructurePtr request(getPVDataCreate()->createPVStructure(archiverStructure));
 
     // set scheme.
-    request->getStringField("scheme")->put("pva");
+    request->getSubField<PVString>("scheme")->put("pva");
 
     // set path.
-    request->getStringField("path")->put(path);
+    request->getSubField<PVString>("path")->put(path);
 
     // Set query.
-    PVStructurePtr query = request->getStructureField("query");
+    PVStructurePtr query = request->getSubField<PVStructure>("query");
 
     for (size_t i = 0; i < fieldnames.size(); ++i)
     {
-        query->getStringField(fieldnames[i])->put(values[i]);
+        query->getSubField<PVString>(fieldnames[i])->put(values[i]);
     }
  
     return request;

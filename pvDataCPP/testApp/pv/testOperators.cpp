@@ -1,8 +1,7 @@
 /* testOperators.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /* Author:  Matej Sekoranja Date: 2013.02 */
 
@@ -31,7 +30,7 @@ MAIN(testOperators)
 
     const double testDV = 12.8;
 
-    PVDoublePtr pvValue = pvStructure->getDoubleField("value");
+    PVDoublePtr pvValue = pvStructure->getSubField<PVDouble>("value");
     *pvValue <<= testDV;
 
     double dv;
@@ -41,7 +40,7 @@ MAIN(testOperators)
 
     const string testSV = "test message";
 
-    PVStringPtr pvMessage = pvStructure->getStringField("alarm.message");
+    PVStringPtr pvMessage = pvStructure->getSubField<PVString>("alarm.message");
     *pvMessage <<= testSV;
 
     string sv;
@@ -76,7 +75,7 @@ MAIN(testOperators)
     
     PVDoubleArray::svector values(3);
     values[0] = 1.1; values[1] = 2.2; values[2] = 3.3;
-    PVDoubleArrayPtr darray = std::tr1::dynamic_pointer_cast<PVDoubleArray>(pvStructure->getScalarArrayField("value", pvDouble));
+    PVDoubleArrayPtr darray = pvStructure->getSubField<PVDoubleArray>("value");
     darray->replace(freeze(values));
     std::cout << *darray << std::endl;
     std::cout << format::array_at(1) << *darray << std::endl;
@@ -90,7 +89,7 @@ MAIN(testOperators)
         pvStructures[i]=
             pvDataCreate->createPVStructure(structure);
     }
-    PVStructureArrayPtr pvStructureArray = pvStructure->getStructureArrayField("value");
+    PVStructureArrayPtr pvStructureArray = pvStructure->getSubField<PVStructureArray>("value");
     pvStructureArray->replace(freeze(pvStructures));
     std::cout << *pvStructure << std::endl;
 

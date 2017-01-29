@@ -1,22 +1,23 @@
 /* timer.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
  */
  
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(NOMINMAX)
 #define NOMINMAX
 #endif
 
 #include <stdexcept>
 #include <string>
+#include <iostream>
+
+#include <epicsThread.h>
 
 #define epicsExportSharedSymbols
-#include <pv/convert.h>
 #include <pv/timer.h>
 
 using std::string;

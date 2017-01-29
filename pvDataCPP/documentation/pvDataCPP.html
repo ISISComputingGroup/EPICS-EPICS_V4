@@ -35,33 +35,16 @@
 
 <div class="head">
 <h1>EPICS pvDataCPP</h1>
-<!-- Maturity: Working Draft or Request for Comments, or Recommendation, and date.  -->
 
-<h2 class="nocount">EPICS v4 Working Group, Working Draft, 10-Nov-2014</h2>
+<h2 class="nocount">Release 6.0.1 - 2016-09-14</h2>
 
   <dl>
-    <dt>Latest version:</dt>
-    <dd><a
-      href="pvDataCPP.html">pvDataCPP.html</a>
-    </dd>
-    <dt>This version:</dt>
-    <dd><a
-      href="pvDataCPP_20141110.html">pvDataCPP_20141110.html</a>
-    </dd>
-    <dt>Previous version:</dt>
-    <dd><a
-      href="pvDataCPP_20140723.html">pvDataCPP_20140723.html</a>
-    </dd>
     <dt>Editors:</dt>
     <dd>Marty Kraimer, BNL</dd>
     <dd>Michael Davidsaver, BNL</dd>
     <dd>Matej Sekoranja, CosyLab</dd>
     <dd>David Hickin, Diamond Light Source</dd>
   </dl>
-
-  <p class="copyright">This product is made available subject to acceptance of the <a
-href="http://epics-pvdata.sourceforge.net/LICENSE.html">EPICS open source
-license.</a></p>
 <hr />
 </div>
 
@@ -79,7 +62,8 @@ V4 control system programming environment:<br />
 
 <h2 class="nocount">Status of this Document</h2>
 
-<p>This is the 10-Nov-2014 version of the C++ implementation of pvData.
+<p>This is the 14-September-2016 version for the 6.0.1 release of the
+C++ implementation of pvData.
 </p>
 
 <p>RELEASE_NOTES.md provides changes since the last release.
@@ -2309,6 +2293,16 @@ public:
     template&lt;typename PVT&gt;
     std::tr1::shared_ptr&lt;PVT&gt; getSubField(std::size_t fieldOffset) const
 
+    PVFieldPtr getSubFieldT(std::string const &amp;fieldName) const;
+
+    template&lt;typename PVT&gt;
+    std::tr1::shared_ptr&lt;PVT&gt; getSubFieldT(std::string const &amp;fieldName) const
+
+    PVFieldPtr getSubFieldT(std::size_t fieldOffset) const;
+
+    template&lt;typename PVT&gt;
+    std::tr1::shared_ptr&lt;PVT&gt; getSubFieldT(std::size_t fieldOffset) const
+
     virtual void serialize(
         ByteBuffer *pbuffer,SerializableControl *pflusher) const ;
     virtual void deserialize(
@@ -2329,7 +2323,7 @@ public:
   <dt>getPVFields</dt>
     <dd>Returns the array of subfields. The set of subfields must all have
       different field names.</dd>
-  <dt>getSubField(std::string fieldName)</dt>
+  <dt>getSubField(std::string const &amp;fieldName)</dt>
     <dd>
       Get a subField of a field.d
       A non-null result is
@@ -2344,9 +2338,13 @@ public:
     <dd>Get the field located a fieldOffset, where fieldOffset is relative to
       the top level structure. This returns null if the specified field is not
       located within this PVStructure.
-      <br />
-      <b>Note</b> The template version replaces getBooleanField, etc.<br/>
     </dd>
+  <dt>getSubFieldT(std::string const &amp;fieldName)</dt>
+     <dd>Like getSubField except that it throws std::runtime_error if
+       the field does not exists or has the wrong type.</dd>
+  <dt>getSubFieldT(int fieldOffset)</dt>
+    <dd>Like getSubField except that it throws std::runtime_error if
+       the field does not exists or has the wrong type.</dd>
   <dt>dumpValue</dt>
      <dd>Method for streams I/O.</dd>
 </dl>
@@ -2662,12 +2660,6 @@ objects:</p>
 </dl>
 <h3>convert.h</h3>
 
-<p>NOTE about copying immutable array fields. If an entire immutable array
-field is copied to another array that has the same elementType, both offsets
-are 0, and the length is the length of the source array, then the shareData
-method of the target array is called and the target array is set immutable.
-Thus the source and target share the same primitive array.</p>
-
 <p>This section describes the supported conversions between data types.</p>
 <ul>
   <li>All supported types can be converted to a string. If you ask for a 100
@@ -2679,12 +2671,6 @@ Thus the source and target share the same primitive array.</p>
       <li>Numeric type to another numeric type</li>
       <li>Both have the same type.</li>
       <li>Either is a string</li>
-    </ul>
-  </li>
-  <li>Copy between PVArrays that satisfy one of the following. 
-    <ul>
-      <li>Both have the same type.</li>
-      <li>Either is a string.</li>
     </ul>
   </li>
   <li>Conversions between numeric scalar types.</li>
@@ -4885,7 +4871,7 @@ Monitor provides:
     monitor. It, together with the queue facility, provides support for
     monitor queues.
     </dd>
-  <dt>monitorPlugin</dt>
+  <dt>monitorPlugin [Deprecated]</dt>
     <dd>This is support for implementing monitor plugins.
      A monitor plugin can be developed that has no knowledge
      of pvAccess but only pvData.
@@ -5067,7 +5053,7 @@ where
 <dl>
    <dt>monitor</dt>
      <dd>Used by code that implements pvAccess monitors.</dd>
-   <dt>monitorPlugin</dt>
+   <dt>monitorPlugin [Deprecated]</dt>
       <dd>Code that provides special semantics for monitors.</dd>
 </dl>
 <h3>monitor</h3>
@@ -5183,6 +5169,8 @@ It has the methods:</p>
 </dl>
 
 <h3>monitorPlugin</h3>
+<p>[ MonitorPlugin and related classes MonitorPluginCreator and 
+MonitorPluginManager are deprecated.]</p>
 <pre>
 class MonitorPlugin
 {

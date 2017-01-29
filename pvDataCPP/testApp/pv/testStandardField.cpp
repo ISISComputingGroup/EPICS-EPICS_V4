@@ -1,8 +1,7 @@
 /* testStandardField.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /* Author:  Marty Kraimer Date: 2012.08 */
 
@@ -34,7 +33,7 @@ static StandardFieldPtr standardField = getStandardField();
 static void print(const string& name, FieldConstPtr const & f)
 {
     if(debug) {
-        std::cout << std::endl << name << std::endl << *f << std::endl;
+        std::cout << std::endl << name << std::endl << f << std::endl;
     }
 }
 

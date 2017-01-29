@@ -44,29 +44,20 @@ TraceRecord::TraceRecord(
     std::string const & recordName,
     epics::pvData::PVStructurePtr const & pvStructure)
 : PVRecord(recordName,pvStructure),
-  pvDatabase(PVDatabase::getMaster()),
-  isDestroyed(false)
+  pvDatabase(PVDatabase::getMaster())
 {
 }
 
-TraceRecord::~TraceRecord()
-{
-}
-
-void TraceRecord::destroy()
-{
-    PVRecord::destroy();
-}
 
 bool TraceRecord::init()
 {
     initPVRecord();
     PVStructurePtr pvStructure = getPVStructure();
-    pvRecordName = pvStructure->getStringField("argument.recordName");
+    pvRecordName = pvStructure->getSubField<PVString>("argument.recordName");
     if(!pvRecordName) return false;
-    pvLevel = pvStructure->getIntField("argument.level");
+    pvLevel = pvStructure->getSubField<PVInt>("argument.level");
     if(!pvLevel) return false;
-    pvResult = pvStructure->getStringField("result.status");
+    pvResult = pvStructure->getSubField<PVString>("result.status");
     if(!pvResult) return false;
     return true;
 }

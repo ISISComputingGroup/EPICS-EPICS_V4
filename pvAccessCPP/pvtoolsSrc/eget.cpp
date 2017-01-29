@@ -1,4 +1,4 @@
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(NOMINMAX)
 #define NOMINMAX
 #endif
 
@@ -24,14 +24,13 @@
 #include <iomanip>
 #include <map>
 
-#include <pv/convert.h>
 #include <pv/event.h>
 #include <epicsExit.h>
 
 #include "pvutils.cpp"
 
 using namespace std;
-using namespace std::tr1;
+namespace TR1 = std::tr1;
 using namespace epics::pvData;
 using namespace epics::pvAccess;
 
@@ -46,12 +45,12 @@ bool transpose = false;
 
 bool dumpStructure = false;
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_MINGW)
 FILE *popen(const char *command, const char *mode) {
-	return _popen(command, mode);
+    return _popen(command, mode);
 }
 int pclose(FILE *stream) {
-	return _pclose(stream);
+    return _pclose(stream);
 }
 #endif
 
@@ -69,7 +68,7 @@ void formatNTAny(std::ostream& o, PVStructurePtr const & pvStruct)
 
 void formatNTScalar(std::ostream& o, PVStructurePtr const & pvStruct)
 {
-    PVScalarPtr value = dynamic_pointer_cast<PVScalar>(pvStruct->getSubField("value"));
+    PVScalarPtr value = TR1::dynamic_pointer_cast<PVScalar>(pvStruct->getSubField("value"));
     if (value.get() == 0)
     {
         std::cerr << "no scalar_t 'value' field in NTScalar" << std::endl;
@@ -136,7 +135,7 @@ std::ostream& formatScalarArray(std::ostream& o, PVScalarArrayPtr const & pvScal
 
 void formatNTScalarArray(std::ostream& o, PVStructurePtr const & pvStruct)
 {
-    PVScalarArrayPtr value = dynamic_pointer_cast<PVScalarArray>(pvStruct->getSubField("value"));
+    PVScalarArrayPtr value = TR1::dynamic_pointer_cast<PVScalarArray>(pvStruct->getSubField("value"));
     if (value.get() == 0)
     {
         std::cerr << "no scalar_t[] 'value' field in NTScalarArray" << std::endl;
@@ -150,7 +149,7 @@ void formatNTScalarArray(std::ostream& o, PVStructurePtr const & pvStruct)
 
 void formatNTEnum(std::ostream& o, PVStructurePtr const & pvStruct)
 {
-    PVStructurePtr enumt = dynamic_pointer_cast<PVStructure>(pvStruct->getSubField("value"));
+    PVStructurePtr enumt = TR1::dynamic_pointer_cast<PVStructure>(pvStruct->getSubField("value"));
     if (enumt.get() == 0)
     {
         std::cerr << "no enum_t 'value' field in NTEnum" << std::endl;
@@ -329,14 +328,14 @@ void formatTable(std::ostream& o,
 
 void formatNTTable(std::ostream& o, PVStructurePtr const & pvStruct)
 {
-    PVStringArrayPtr labels = dynamic_pointer_cast<PVStringArray>(pvStruct->getScalarArrayField("labels", pvString));
+    PVStringArrayPtr labels = pvStruct->getSubField<PVStringArray>("labels");
     if (labels.get() == 0)
     {
         std::cerr << "no string[] 'labels' field in NTTable" << std::endl;
         return;
     }
 
-    PVStructurePtr value = pvStruct->getStructureField("value");
+    PVStructurePtr value = pvStruct->getSubField<PVStructure>("value");
     if (value.get() == 0)
     {
         std::cerr << "no 'value' structure in NTTable" << std::endl;
@@ -355,7 +354,7 @@ void formatNTTable(std::ostream& o, PVStructurePtr const & pvStruct)
 
     for (size_t i = 0; i < numColumns; i++)
     {
-        PVScalarArrayPtr array = dynamic_pointer_cast<PVScalarArray>(fields[i]);
+        PVScalarArrayPtr array = TR1::dynamic_pointer_cast<PVScalarArray>(fields[i]);
         if (array.get() == 0)
         {
             std::cerr << "malformed NTTable, " << (i+1) << ". field is not scalar_t[]" << std::endl;
@@ -367,12 +366,12 @@ void formatNTTable(std::ostream& o, PVStructurePtr const & pvStruct)
 
     bool showHeader = (mode != TerseMode);
     formatTable(o, labels->view(), columnData, showHeader, transpose);
-}    
+}
 
 
 void formatNTMatrix(std::ostream& o, PVStructurePtr const & pvStruct)
 {
-    PVDoubleArrayPtr value = dynamic_pointer_cast<PVDoubleArray>(pvStruct->getScalarArrayField("value", pvDouble));
+    PVDoubleArrayPtr value = pvStruct->getSubField<PVDoubleArray>("value");
     if (value.get() == 0)
     {
         std::cerr << "no double[] 'value' field in NTMatrix" << std::endl;
@@ -381,7 +380,7 @@ void formatNTMatrix(std::ostream& o, PVStructurePtr const & pvStruct)
 
     int32 rows, cols;
 
-    PVIntArrayPtr dim = dynamic_pointer_cast<PVIntArray>(pvStruct->getScalarArrayField("dim", pvInt));
+    PVIntArrayPtr dim = pvStruct->getSubField<PVIntArray>("dim");
     if (dim.get() != 0)
     {
         // dim[] = { rows, columns }
@@ -480,7 +479,7 @@ void formatNTMatrix(std::ostream& o, PVStructurePtr const & pvStruct)
 // TODO use formatNTTable
 void formatNTNameValue(std::ostream& o, PVStructurePtr const & pvStruct)
 {
-    PVStringArrayPtr name = dynamic_pointer_cast<PVStringArray>(pvStruct->getScalarArrayField("name", pvString));
+    PVStringArrayPtr name = pvStruct->getSubField<PVStringArray>("name");
     if (name.get() == 0)
     {
         std::cerr << "no string[] 'name' field in NTNameValue" << std::endl;
@@ -494,7 +493,7 @@ void formatNTNameValue(std::ostream& o, PVStructurePtr const & pvStruct)
         return;
     }
 
-    PVScalarArrayPtr array = dynamic_pointer_cast<PVScalarArray>(value);
+    PVScalarArrayPtr array = TR1::dynamic_pointer_cast<PVScalarArray>(value);
     if (array.get() == 0)
     {
         std::cerr << "malformed NTNameValue, 'value' field is not scalar_t[]" << std::endl;
@@ -514,7 +513,7 @@ void formatNTNameValue(std::ostream& o, PVStructurePtr const & pvStruct)
 
     // get max column name size
     bool showHeader = (mode != TerseMode);
-    
+
     size_t maxLabelColumnLength = showHeader ? getLongestString(nameData) : 0;
     size_t maxColumnLength = showHeader ? getLongestString(array) : 0;
 
@@ -614,22 +613,22 @@ void formatNTNameValue(std::ostream& o, PVStructurePtr const & pvStruct)
 
 void formatNTURI(std::ostream& o, PVStructurePtr const & pvStruct)
 {
-    PVStringPtr scheme = dynamic_pointer_cast<PVString>(pvStruct->getStringField("scheme"));
+    PVStringPtr scheme = TR1::dynamic_pointer_cast<PVString>(pvStruct->getSubField<PVString>("scheme"));
     if (scheme.get() == 0)
     {
         std::cerr << "no string 'scheme' field in NTURI" << std::endl;
     }
 
-    PVStringPtr authority = dynamic_pointer_cast<PVString>(pvStruct->getSubField("authority"));
+    PVStringPtr authority = TR1::dynamic_pointer_cast<PVString>(pvStruct->getSubField("authority"));
 
-    PVStringPtr path = dynamic_pointer_cast<PVString>(pvStruct->getStringField("path"));
+    PVStringPtr path = TR1::dynamic_pointer_cast<PVString>(pvStruct->getSubField<PVString>("path"));
     if (path.get() == 0)
     {
         std::cerr << "no string 'path' field in NTURI" << std::endl;
         return;
     }
 
-    PVStructurePtr query = dynamic_pointer_cast<PVStructure>(pvStruct->getSubField("query"));
+    PVStructurePtr query = TR1::dynamic_pointer_cast<PVStructure>(pvStruct->getSubField("query"));
 
     o << scheme->get() << "://";
     if (authority.get()) o << authority->get();
@@ -684,8 +683,8 @@ void formatNTNDArray(std::ostream& /*o*/, PVStructurePtr const & pvStruct)
     PVStructureArray::const_svector attributes(pvAttributes->view());
 
     for (PVStructureArray::const_svector::const_iterator iter = attributes.begin();
-         iter != attributes.end();
-         iter++)
+            iter != attributes.end();
+            iter++)
     {
         PVStructure::shared_pointer attribute = *iter;
         PVString::shared_pointer pvName = attribute->getSubField<PVString>("name");
@@ -751,7 +750,7 @@ void formatNTNDArray(std::ostream& /*o*/, PVStructurePtr const & pvStruct)
         return;
     }
 
-    PVByteArrayPtr array = dynamic_pointer_cast<PVByteArray>(value);
+    PVByteArrayPtr array = TR1::dynamic_pointer_cast<PVByteArray>(value);
     if (array.get() == 0)
     {
         std::cerr << "currently only byte[] value is supported" << std::endl;
@@ -761,7 +760,7 @@ void formatNTNDArray(std::ostream& /*o*/, PVStructurePtr const & pvStruct)
     if (array->getLength() != imageSize)
     {
         std::cerr << "value array length does not match expected image size (" <<
-                     array->getLength() << " != " << imageSize << ")" << std::endl;
+                  array->getLength() << " != " << imageSize << ")" << std::endl;
         return;
     }
 
@@ -852,7 +851,7 @@ void formatNT(std::ostream& o, PVFieldPtr const & pv)
     Type type = pv->getField()->getType();
     if (type==structure)
     {
-        PVStructurePtr pvStruct = static_pointer_cast<PVStructure>(pv);
+        PVStructurePtr pvStruct = TR1::static_pointer_cast<PVStructure>(pv);
         {
             string id = pvStruct->getField()->getID();
 
@@ -877,7 +876,7 @@ void formatNT(std::ostream& o, PVFieldPtr const & pv)
             return;
         }
     }
-    
+
     // no ID, just dump
     pvutil_ostream myos(std::cout.rdbuf());
     myos << *(pv.get()) << std::endl;
@@ -891,7 +890,7 @@ void dumpValue(std::string const & channelName, PVField::shared_pointer const & 
 
     pvutil_ostream myos(std::cout.rdbuf());
     if (pv->getField()->getType() == structure)
-        myos << *(static_pointer_cast<PVStructure>(pv).get()) << std::endl << std::endl;
+        myos << *(TR1::static_pointer_cast<PVStructure>(pv).get()) << std::endl << std::endl;
     else
         myos << *(pv.get()) << std::endl << std::endl;
 }
@@ -919,18 +918,18 @@ void printValue(std::string const & channelName, PVStructure::shared_pointer con
                 std::cout << *(value.get()) << std::endl;
             else if (valueType == scalarArray)
             {
-                //formatScalarArray(std::cout, dynamic_pointer_cast<PVScalarArray>(value));
-                formatVector(std::cout, "", dynamic_pointer_cast<PVScalarArray>(value), false);
+                //formatScalarArray(std::cout, TR1::dynamic_pointer_cast<PVScalarArray>(value));
+                formatVector(std::cout, "", TR1::dynamic_pointer_cast<PVScalarArray>(value), false);
             }
             else
             {
                 // switch to structure mode, unless it's T-type
-                if (valueType == structure && isTType(static_pointer_cast<PVStructure>(value)))
+                if (valueType == structure && isTType(TR1::static_pointer_cast<PVStructure>(value)))
                 {
-                    formatTType(std::cout, static_pointer_cast<PVStructure>(value));
+                    formatTType(std::cout, TR1::static_pointer_cast<PVStructure>(value));
                     std::cout << std::endl;
                 }
-                else                 
+                else
                     dumpValue(channelName, pv);
             }
         }
@@ -959,20 +958,20 @@ void printValues(shared_vector<const string> const & names, vector<PVStructure::
         {
             Type type = value->getField()->getType();
             if (type == scalarArray)
-                scalarArrays.push_back(dynamic_pointer_cast<PVScalarArray>(value));
+                scalarArrays.push_back(TR1::dynamic_pointer_cast<PVScalarArray>(value));
             else if (type == scalar)
             {
-                PVScalar::shared_pointer scalar = dynamic_pointer_cast<PVScalar>(value);
+                PVScalar::shared_pointer scalar = TR1::dynamic_pointer_cast<PVScalar>(value);
                 scalars.push_back(scalar);
 
                 // make an array, i.e. PVStringArray, out of a scalar (since scalar is an array w/ element count == 1)
                 PVStringArray::shared_pointer StringArray =
-                        dynamic_pointer_cast<PVStringArray>(getPVDataCreate()->createPVScalarArray(pvString));
-                
+                    TR1::dynamic_pointer_cast<PVStringArray>(getPVDataCreate()->createPVScalarArray(pvString));
+
                 PVStringArray::svector values;
-                values.push_back(getConvert()->toString(scalar));
+                values.push_back(scalar->getAs<std::string>());
                 StringArray->replace(freeze(values));
-                
+
                 scalarArrays.push_back(StringArray);
             }
         }
@@ -1031,6 +1030,7 @@ void usage (void)
 {
     fprintf (stderr, "\nUsage: eget [options] [<PV name>... | -s <service name>]\n\n"
              "  -h: Help: Print this message\n"
+             "  -v: Print version and exit\n"
              "\noptions:\n"
              "  -s <service name>:   Service API compliant based RPC service name (accepts NTURI request argument)\n"
              "  -a <service arg>:    Service argument in 'name[=value]' or 'name value' form\n"
@@ -1083,14 +1083,14 @@ private:
     bool m_done;
 
 public:
-    
+
     ChannelGetRequesterImpl(std::string channelName, bool printValue) :
         m_channelName(channelName),
         m_printValue(printValue),
         m_done(false)
     {
     }
-    
+
     virtual string getRequesterName()
     {
         return "ChannelGetRequesterImpl";
@@ -1112,7 +1112,7 @@ public:
             {
                 std::cerr << "[" << m_channelName << "] channel get create: " << dump_stack_only_on_debug(status) << std::endl;
             }
-            
+
             channelGet->lastRequest();
             channelGet->get();
         }
@@ -1191,14 +1191,14 @@ private:
     bool m_done;
 
 public:
-    
-    ChannelRPCRequesterImpl(std::string channelName) : 
+
+    ChannelRPCRequesterImpl(std::string channelName) :
         m_successfullyConnected(false),
         m_channelName(channelName),
         m_done(false)
     {
     }
-    
+
     virtual string getRequesterName()
     {
         return "ChannelRPCRequesterImpl";
@@ -1218,12 +1218,12 @@ public:
             {
                 std::cerr << "[" << m_channelName << "] channel RPC create: " << dump_stack_only_on_debug(status) << std::endl;
             }
-            
-            {   
+
+            {
                 Lock lock(m_pointerMutex);
                 m_successfullyConnected = status.isSuccess();
             }
-            
+
             m_connectionEvent.signal();
         }
         else
@@ -1262,10 +1262,10 @@ public:
         {
             std::cerr << "[" << m_channelName << "] failed to RPC: " << dump_stack_only_on_debug(status) << std::endl;
         }
-        
+
         m_event.signal();
     }
-    
+
     /*
     void request(epics::pvData::PVStructure::shared_pointer const &pvRequest)
     {
@@ -1312,11 +1312,11 @@ public:
 
 class MonitorRequesterImpl : public MonitorRequester
 {
-	private:
+private:
 
     string m_channelName;
 
-    public:
+public:
 
     MonitorRequesterImpl(std::string channelName) : m_channelName(channelName) {};
 
@@ -1334,11 +1334,11 @@ class MonitorRequesterImpl : public MonitorRequester
     {
         if (status.isSuccess())
         {
-        	/*
+            /*
             string str;
             structure->toString(&str);
             std::cout << str << std::endl;
-        	*/
+            */
 
             Status startStatus = monitor->start();
             // show error
@@ -1358,55 +1358,55 @@ class MonitorRequesterImpl : public MonitorRequester
     virtual void monitorEvent(Monitor::shared_pointer const & monitor)
     {
 
-		MonitorElement::shared_pointer element;
+        MonitorElement::shared_pointer element;
         while ((element = monitor->poll()))
-		{
+        {
             if (mode == ValueOnlyMode)
             {
                 PVField::shared_pointer value = element->pvStructurePtr->getSubField("value");
                 if (value.get() == 0)
                 {
-                	std::cerr << "no 'value' field" << std::endl;
+                    std::cerr << "no 'value' field" << std::endl;
                     dumpValue(m_channelName, element->pvStructurePtr);
                 }
                 else
                 {
-					Type valueType = value->getField()->getType();
-					if (valueType != scalar && valueType != scalarArray)
-					{
+                    Type valueType = value->getField()->getType();
+                    if (valueType != scalar && valueType != scalarArray)
+                    {
                         // switch to structure mode, unless it's T-type
-                        if (valueType == structure && isTType(static_pointer_cast<PVStructure>(value)))
+                        if (valueType == structure && isTType(TR1::static_pointer_cast<PVStructure>(value)))
                         {
-        					if (fieldSeparator == ' ')
-        						std::cout << std::setw(30) << std::left << m_channelName;
-        					else
-        						std::cout << m_channelName;
-        					std::cout << fieldSeparator;
+                            if (fieldSeparator == ' ')
+                                std::cout << std::setw(30) << std::left << m_channelName;
+                            else
+                                std::cout << m_channelName;
+                            std::cout << fieldSeparator;
 
-                            formatTType(std::cout, static_pointer_cast<PVStructure>(value));
+                            formatTType(std::cout, TR1::static_pointer_cast<PVStructure>(value));
                             std::cout << std::endl;
                         }
-                        else                 
+                        else
                             dumpValue(m_channelName, element->pvStructurePtr);
-					}
-					else
-					{
-						if (fieldSeparator == ' ')
-							std::cout << std::setw(30) << std::left << m_channelName;
-						else
-							std::cout << m_channelName;
-						std::cout << fieldSeparator;
+                    }
+                    else
+                    {
+                        if (fieldSeparator == ' ')
+                            std::cout << std::setw(30) << std::left << m_channelName;
+                        else
+                            std::cout << m_channelName;
+                        std::cout << fieldSeparator;
 
-						terse(std::cout, value) << std::endl;
-					}
+                        terse(std::cout, value) << std::endl;
+                    }
                 }
             }
             else if (mode == TerseMode)
             {
-            	if (fieldSeparator == ' ')
-                	std::cout << std::setw(30) << std::left << m_channelName;
+                if (fieldSeparator == ' ')
+                    std::cout << std::setw(30) << std::left << m_channelName;
                 else
-                	std::cout << m_channelName;
+                    std::cout << m_channelName;
                 std::cout << fieldSeparator;
 
                 terseStructure(std::cout, element->pvStructurePtr) << std::endl;
@@ -1416,14 +1416,16 @@ class MonitorRequesterImpl : public MonitorRequester
                 dumpValue(m_channelName, element->pvStructurePtr);
             }
 
-			monitor->release(element);
-		}
+            monitor->release(element);
+        }
 
     }
 
     virtual void unlisten(Monitor::shared_pointer const & /*monitor*/)
     {
-        std::cerr << "unlisten" << std::endl;
+        //std::cerr << "unlisten" << std::endl;
+        // TODO
+        epicsExit(0);
     }
 };
 
@@ -1467,13 +1469,23 @@ int main (int argc, char *argv[])
 
     setvbuf(stdout,NULL,_IOLBF,BUFSIZ);    /* Set stdout to line buffering */
 
-    while ((opt = getopt(argc, argv, ":hr:s:a:w:zNtTmxp:qdcF:f:ni")) != -1) {
+    while ((opt = getopt(argc, argv, ":hvr:s:a:w:zNtTmxp:qdcF:f:ni")) != -1) {
         switch (opt) {
         case 'h':               /* Print usage */
             usage();
             return 0;
+        case 'v':               /* Print version */
+        {
+            Version version("eget", "cpp",
+                    EPICS_PVA_MAJOR_VERSION,
+                    EPICS_PVA_MINOR_VERSION,
+                    EPICS_PVA_MAINTENANCE_VERSION,
+                    EPICS_PVA_DEVELOPMENT_FLAG);
+            fprintf(stdout, "%s\n", version.getVersionString().c_str());
+            return 0;
+        }
         case 'w':               /* Set PVA timeout value */
-            if(epicsScanDouble(optarg, &timeOut) != 1)
+            if((epicsScanDouble(optarg, &timeOut)) != 1 || timeOut <= 0.0)
             {
                 fprintf(stderr, "'%s' is not a valid timeout value "
                         "- ignored. ('eget -h' for help.)\n", optarg);
@@ -1492,7 +1504,7 @@ int main (int argc, char *argv[])
             size_t eqPos = param.find('=');
             if (eqPos==0)
             {
-                // no name 
+                // no name
 
                 fprintf(stderr, "Parameter not specified in '-a name=value' or '-a name value' form. ('eget -h' for help.)\n");
                 return 1;
@@ -1508,7 +1520,7 @@ int main (int argc, char *argv[])
                 else
                 {
                     // no value
-                
+
                     //fprintf(stderr, "Parameter not specified in '-a name=value' or '-a name value' form. ('eget -h' for help.)\n");
                     //return 1;
                     parameters.push_back(pair<string,string>(param, ""));
@@ -1563,7 +1575,7 @@ int main (int argc, char *argv[])
                 // TODO
                 return 1;
             }
-            
+
             break;
         case 'q':               /* Quiet mode */
             quiet = true;
@@ -1619,7 +1631,7 @@ int main (int argc, char *argv[])
     }
 
     int nPvs = argc - optind;       /* Remaining arg list are PV names */
-    if (nPvs > 0) 
+    if (nPvs > 0)
     {
         // do not allow reading file and command line specified pvs
         fromStream = false;
@@ -1629,7 +1641,7 @@ int main (int argc, char *argv[])
         fprintf(stderr, "No PV name(s) specified. ('eget -h' for help.)\n");
         return 1;
     }
-    
+
     // only one pv, arguments provided without serviceRequest switch
     if (nPvs == 1 && parameters.size() > 0)
     {
@@ -1643,7 +1655,7 @@ int main (int argc, char *argv[])
         fprintf(stderr, "PV name(s) specified and service query requested. ('eget -h' for help.)\n");
         return 1;
     }
-    
+
     SET_LOG_LEVEL(debug ? logLevelDebug : logLevelError);
 
     std::cout << std::boolalpha;
@@ -1658,9 +1670,9 @@ int main (int argc, char *argv[])
     // try to parse as URI if only one nPvs
     URI uri;
     bool validURI =
-            (serviceRequest || nPvs == 1) ?
-                URI::parse(serviceRequest ? service : argv[optind], uri) :
-                false;
+        (serviceRequest || nPvs == 1) ?
+        URI::parse(serviceRequest ? service : argv[optind], uri) :
+        false;
 
     // if there is only one nPvs and it's a valid URI that has ? character,
     // then it's an service (RPC) request
@@ -1743,12 +1755,12 @@ int main (int argc, char *argv[])
         }
 
         PVStructure::shared_pointer pvRequest =
-                CreateRequest::create()->createRequest(request);
+            CreateRequest::create()->createRequest(request);
         if(pvRequest.get()==0) {
             fprintf(stderr, "failed to parse request string\n");
             return 1;
         }
-        
+
         // register "pva" and "ca" providers
         ClientFactory::start();
         epics::pvAccess::ca::CAClientFactory::start();
@@ -1757,12 +1769,12 @@ int main (int argc, char *argv[])
         vector<Channel::shared_pointer> channels(nPvs);
         for (int n = 0; n < nPvs; n++)
         {
-            shared_ptr<ChannelRequesterImpl> channelRequesterImpl(new ChannelRequesterImpl(quiet));
+            TR1::shared_ptr<ChannelRequesterImpl> channelRequesterImpl(new ChannelRequesterImpl(quiet));
             if (pvsAddress[n].empty())
                 channels[n] = getChannelProviderRegistry()->getProvider(providerNames[n])->createChannel(pvs[n], channelRequesterImpl);
             else
                 channels[n] = getChannelProviderRegistry()->getProvider(providerNames[n])->createChannel(pvs[n], channelRequesterImpl,
-                                                                                                         ChannelProvider::PRIORITY_DEFAULT, pvsAddress[n]);
+                              ChannelProvider::PRIORITY_DEFAULT, pvsAddress[n]);
         }
 
         // TODO maybe unify for nPvs == 1?!
@@ -1776,13 +1788,13 @@ int main (int argc, char *argv[])
             collectedValues.reserve(nPvs);
             collectedNames.reserve(nPvs);
         }
-        
+
         // for now a simple iterating sync implementation, guarantees order
         int n = -1;
         while (true)
         {
             Channel::shared_pointer channel;
-            
+
             if (!fromStream)
             {
                 if (++n >= nPvs)
@@ -1799,7 +1811,7 @@ int main (int argc, char *argv[])
                 *inputStream >> cn;
                 if (!(*inputStream))
                     break;
-                    
+
                 URI uri;
                 bool validURI = URI::parse(cn.c_str(), uri);
                 if (validURI)
@@ -1833,26 +1845,26 @@ int main (int argc, char *argv[])
                     cp = defaultProvider;
                 }
 
-                    
-                    
-                shared_ptr<ChannelRequesterImpl> channelRequesterImpl(new ChannelRequesterImpl(quiet));
+
+
+                TR1::shared_ptr<ChannelRequesterImpl> channelRequesterImpl(new ChannelRequesterImpl(quiet));
                 if (ca.empty())
                     channel = getChannelProviderRegistry()->getProvider(cp)->createChannel(cn, channelRequesterImpl);
                 else
                     channel = getChannelProviderRegistry()->getProvider(cp)->createChannel(cn, channelRequesterImpl,
-                                                                                           ChannelProvider::PRIORITY_DEFAULT, ca);
+                              ChannelProvider::PRIORITY_DEFAULT, ca);
             }
 
             if (monitor)
             {
-                shared_ptr<ChannelRequesterImpl> channelRequesterImpl = dynamic_pointer_cast<ChannelRequesterImpl>(channel->getChannelRequester());
+                TR1::shared_ptr<ChannelRequesterImpl> channelRequesterImpl = TR1::dynamic_pointer_cast<ChannelRequesterImpl>(channel->getChannelRequester());
                 channelRequesterImpl->showDisconnectMessage();
 
                 // TODO remove this line, when CA provider will allow creation of monitors
                 // when channels is yet not connected
                 if (channelRequesterImpl->waitUntilConnected(timeOut))
                 {
-                    shared_ptr<MonitorRequesterImpl> monitorRequesterImpl(new MonitorRequesterImpl(channel->getChannelName()));
+                    TR1::shared_ptr<MonitorRequesterImpl> monitorRequesterImpl(new MonitorRequesterImpl(channel->getChannelName()));
                     channel->createMonitor(monitorRequesterImpl, pvRequest);
                 }
                 else
@@ -1865,16 +1877,16 @@ int main (int argc, char *argv[])
             else
             {
                 /*
-                shared_ptr<ChannelRequesterImpl> channelRequesterImpl(new ChannelRequesterImpl());
+                TR1::shared_ptr<ChannelRequesterImpl> channelRequesterImpl(new ChannelRequesterImpl());
                 Channel::shared_pointer channel = provider->createChannel(pvs[n], channelRequesterImpl);
                 */
-                
-                shared_ptr<ChannelRequesterImpl> channelRequesterImpl = dynamic_pointer_cast<ChannelRequesterImpl>(channel->getChannelRequester());
-    
+
+                TR1::shared_ptr<ChannelRequesterImpl> channelRequesterImpl = TR1::dynamic_pointer_cast<ChannelRequesterImpl>(channel->getChannelRequester());
+
                 if (channelRequesterImpl->waitUntilConnected(timeOut))
                 {
-                    shared_ptr<GetFieldRequesterImpl> getFieldRequesterImpl;
-    
+                    TR1::shared_ptr<GetFieldRequesterImpl> getFieldRequesterImpl;
+
                     // probe for value field
                     // but only if there is only one PV request (otherwise mode change makes a mess)
                     if (mode == ValueOnlyMode && nPvs == 1)
@@ -1883,7 +1895,7 @@ int main (int argc, char *argv[])
                         // get all to be immune to bad clients not supporting selective getField request
                         channel->getField(getFieldRequesterImpl, "");
                     }
-    
+
                     if (getFieldRequesterImpl.get() == 0 ||
                             getFieldRequesterImpl->waitUntilFieldGet(timeOut))
                     {
@@ -1891,7 +1903,7 @@ int main (int argc, char *argv[])
                         if (getFieldRequesterImpl.get())
                         {
                             Structure::const_shared_pointer structure =
-                                    dynamic_pointer_cast<const Structure>(getFieldRequesterImpl->getField());
+                                TR1::dynamic_pointer_cast<const Structure>(getFieldRequesterImpl->getField());
                             if (structure.get() == 0 || structure->getField("value").get() == 0)
                             {
                                 // fallback to structure
@@ -1899,10 +1911,10 @@ int main (int argc, char *argv[])
                                 pvRequest = CreateRequest::create()->createRequest("field()");
                             }
                         }
-    
-                        shared_ptr<ChannelGetRequesterImpl> getRequesterImpl(
-                                    new ChannelGetRequesterImpl(channel->getChannelName(), false)
-                                    );
+
+                        TR1::shared_ptr<ChannelGetRequesterImpl> getRequesterImpl(
+                            new ChannelGetRequesterImpl(channel->getChannelName(), false)
+                        );
                         ChannelGet::shared_pointer channelGet = channel->createChannelGet(getRequesterImpl, pvRequest);
                         bool ok = getRequesterImpl->waitUntilGet(timeOut);
                         allOK &= ok;
@@ -1941,10 +1953,11 @@ int main (int argc, char *argv[])
 
         if (allOK && monitor)
         {
-        	while (true)
-        		epicsThreadSleep(timeOut);
+            while (true)
+                epicsThreadSleep(timeOut);
         }
 
+        epics::pvAccess::ca::CAClientFactory::stop();
         ClientFactory::stop();
     }
     // service RPC mode
@@ -2012,31 +2025,31 @@ int main (int argc, char *argv[])
 
         // simply empty
         PVStructure::shared_pointer pvRequest =
-                CreateRequest::create()->createRequest(
-                    !pvRequestProvidedByUser ? DEFAULT_RPC_REQUEST : request
-                 );
+            CreateRequest::create()->createRequest(
+                !pvRequestProvidedByUser ? DEFAULT_RPC_REQUEST : request
+            );
         if(pvRequest.get()==NULL) {
             fprintf(stderr, "failed to parse request string\n");
             return 1;
         }
-        
+
 
         StringArray queryFieldNames;
         FieldConstPtrArray queryFields;
         for (vector< pair<string, string> >::iterator iter = parameters.begin();
-             iter != parameters.end();
-             iter++)
+                iter != parameters.end();
+                iter++)
         {
             queryFieldNames.push_back(iter->first);
             queryFields.push_back(getFieldCreate()->createScalar(pvString));
         }
 
         Structure::const_shared_pointer queryStructure(
-                    getFieldCreate()->createStructure(
-                        queryFieldNames,
-                        queryFields
-                        )
-                    );
+            getFieldCreate()->createStructure(
+                queryFieldNames,
+                queryFields
+            )
+        );
 
 
 
@@ -2053,28 +2066,28 @@ int main (int argc, char *argv[])
         uriFields.push_back(queryStructure);
 
         Structure::const_shared_pointer uriStructure(
-                    getFieldCreate()->createStructure(
-                        "epics:nt/NTURI:1.0",
-                        uriFieldNames,
-                        uriFields
-                        )
-                    );
+            getFieldCreate()->createStructure(
+                "epics:nt/NTURI:1.0",
+                uriFieldNames,
+                uriFields
+            )
+        );
 
 
 
         PVStructure::shared_pointer request(
-                    getPVDataCreate()->createPVStructure(uriStructure)
-                    );
+            getPVDataCreate()->createPVStructure(uriStructure)
+        );
 
-        request->getStringField("scheme")->put("pva");
-        if (!authority.empty()) request->getStringField("authority")->put(authority);
-        request->getStringField("path")->put(service);
-        PVStructure::shared_pointer query = request->getStructureField("query");
+        request->getSubField<PVString>("scheme")->put("pva");
+        if (!authority.empty()) request->getSubField<PVString>("authority")->put(authority);
+        request->getSubField<PVString>("path")->put(service);
+        PVStructure::shared_pointer query = request->getSubField<PVStructure>("query");
         for (vector< pair<string, string> >::iterator iter = parameters.begin();
-             iter != parameters.end();
-             iter++)
+                iter != parameters.end();
+                iter++)
         {
-            query->getStringField(iter->first)->put(iter->second);
+            query->getSubField<PVString>(iter->first)->put(iter->second);
         }
 
 
@@ -2087,17 +2100,17 @@ int main (int argc, char *argv[])
 
         ClientFactory::start();
         ChannelProvider::shared_pointer provider = getChannelProviderRegistry()->getProvider("pva");
-        
-        shared_ptr<ChannelRequesterImpl> channelRequesterImpl(new ChannelRequesterImpl(quiet));
+
+        TR1::shared_ptr<ChannelRequesterImpl> channelRequesterImpl(new ChannelRequesterImpl(quiet));
         Channel::shared_pointer channel =
-                authority.empty() ?
-                    provider->createChannel(service, channelRequesterImpl) :
-                    provider->createChannel(service, channelRequesterImpl,
-                                            ChannelProvider::PRIORITY_DEFAULT, authority);
-        
+            authority.empty() ?
+            provider->createChannel(service, channelRequesterImpl) :
+            provider->createChannel(service, channelRequesterImpl,
+                                    ChannelProvider::PRIORITY_DEFAULT, authority);
+
         if (channelRequesterImpl->waitUntilConnected(timeOut))
         {
-            shared_ptr<ChannelRPCRequesterImpl> rpcRequesterImpl(new ChannelRPCRequesterImpl(channel->getChannelName()));
+            TR1::shared_ptr<ChannelRPCRequesterImpl> rpcRequesterImpl(new ChannelRPCRequesterImpl(channel->getChannelName()));
             ChannelRPC::shared_pointer channelRPC = channel->createChannelRPC(rpcRequesterImpl, pvRequest);
 
             if (rpcRequesterImpl->waitUntilConnected(timeOut))
@@ -2136,7 +2149,6 @@ int main (int argc, char *argv[])
 
         channel->destroy();
 
-        epics::pvAccess::ca::CAClientFactory::stop();
         ClientFactory::stop();
     }
 

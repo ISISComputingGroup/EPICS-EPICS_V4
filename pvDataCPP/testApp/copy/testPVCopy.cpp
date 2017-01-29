@@ -1,8 +1,7 @@
 /*testPVCopyMain.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  * @author mrk
@@ -41,21 +40,18 @@ static void testPVScalar(
     PVCopyPtr const & pvCopy)
 {
     PVStructurePtr pvStructureCopy;
-    PVFieldPtr pvField;
     PVScalarPtr pvValueMaster;
     PVScalarPtr pvValueCopy;
     BitSetPtr bitSet;
     size_t offset;
     ConvertPtr convert = getConvert();
 
-    pvField = pvMaster->getSubField(valueNameMaster);
-    pvValueMaster = static_pointer_cast<PVScalar>(pvField);
+    pvValueMaster = pvMaster->getSubField<PVScalar>(valueNameMaster);
     convert->fromDouble(pvValueMaster,.04);
     StructureConstPtr structure = pvCopy->getStructure();
     if(debug) { cout << "structure from copy" << endl << *structure << endl; }
     pvStructureCopy = pvCopy->createPVStructure();
-    pvField = pvStructureCopy->getSubField(valueNameCopy);
-    pvValueCopy = static_pointer_cast<PVScalar>(pvField);
+    pvValueCopy = pvStructureCopy->getSubField<PVScalar>(valueNameCopy);
     bitSet = BitSetPtr(new BitSet(pvStructureCopy->getNumberFields()));
     pvCopy->initCopy(pvStructureCopy, bitSet);
     if(debug) { cout << "after initCopy pvValueCopy " << convert->toDouble(pvValueCopy); }
@@ -108,7 +104,6 @@ static void testPVScalar(
 }
 
 static void testPVScalarArray(
-    ScalarType scalarType,
     string const & valueNameMaster,
     string const & valueNameCopy,
     PVStructurePtr const & pvMaster,
@@ -123,14 +118,14 @@ static void testPVScalarArray(
     shared_vector<double> values(n);
     shared_vector<const double> cvalues;
 
-    pvValueMaster = pvMaster->getScalarArrayField(valueNameMaster,scalarType);
+    pvValueMaster = pvMaster->getSubField<PVScalarArray>(valueNameMaster);
     for(size_t i=0; i<n; i++) values[i] = i;
     const shared_vector<const double> xxx(freeze(values));
     pvValueMaster->putFrom(xxx);
     StructureConstPtr structure = pvCopy->getStructure();
     if(debug) { cout << "structure from copy" << endl << *structure << endl;}
     pvStructureCopy = pvCopy->createPVStructure();
-    pvValueCopy = pvStructureCopy->getScalarArrayField(valueNameCopy,scalarType);
+    pvValueCopy = pvStructureCopy->getSubField<PVScalarArray>(valueNameCopy);
     bitSet = BitSetPtr(new BitSet(pvStructureCopy->getNumberFields()));
     pvCopy->initCopy(pvStructureCopy, bitSet);
     if(debug) { cout << "after initCopy pvValueCopy " << *pvValueCopy << endl; }
@@ -256,7 +251,7 @@ static void arrayTest()
     if(debug) { cout << "pvRequest\n" << *pvRequest << endl; }
     pvCopy = PVCopy::create(pvMaster,pvRequest,"");
     valueNameCopy = "value";
-    testPVScalarArray(pvDouble,valueNameMaster,valueNameCopy,pvMaster,pvCopy);
+    testPVScalarArray(valueNameMaster,valueNameCopy,pvMaster,pvCopy);
     request = "";
     valueNameMaster = "value";
     pvRequest = createRequest->createRequest(request);
@@ -264,7 +259,7 @@ static void arrayTest()
     if(debug) { cout << "pvRequest\n" << *pvRequest << endl; }
     pvCopy = PVCopy::create(pvMaster,pvRequest,"");
     valueNameCopy = "value";
-    testPVScalarArray(pvDouble,valueNameMaster,valueNameCopy,pvMaster,pvCopy);
+    testPVScalarArray(valueNameMaster,valueNameCopy,pvMaster,pvCopy);
     request = "alarm,timeStamp,value";
     valueNameMaster = "value";
     pvRequest = createRequest->createRequest(request);
@@ -272,7 +267,7 @@ static void arrayTest()
     if(debug) { cout << "pvRequest\n" << *pvRequest << endl; }
     pvCopy = PVCopy::create(pvMaster,pvRequest,"");
     valueNameCopy = "value";
-    testPVScalarArray(pvDouble,valueNameMaster,valueNameCopy,pvMaster,pvCopy);
+    testPVScalarArray(valueNameMaster,valueNameCopy,pvMaster,pvCopy);
 }
 
 static PVStructurePtr createPowerSupply()

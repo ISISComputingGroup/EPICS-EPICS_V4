@@ -11,6 +11,7 @@
 
 #include <sstream>
 
+#include <epicsGuard.h>
 #include <pv/thread.h>
 #include <pv/bitSetUtil.h>
 #include <pv/queue.h>
@@ -18,7 +19,6 @@
 
 #define epicsExportSharedSymbols
 
-#include <pv/pvCopyMonitor.h>
 #include <pv/channelProviderLocal.h>
 
 using namespace epics::pvData;
@@ -33,21 +33,25 @@ namespace epics { namespace pvDatabase {
 
 static MonitorPtr nullMonitor;
 static MonitorElementPtr NULLMonitorElement;
+static Status failedToCreateMonitorStatus(Status::STATUSTYPE_ERROR,"failed to create monitor");
 static Status wasDestroyedStatus(Status::STATUSTYPE_ERROR,"was destroyed");
+static Status alreadyStartedStatus(Status::STATUSTYPE_ERROR,"already started");
+static Status notStartedStatus(Status::STATUSTYPE_ERROR,"not started");
 
-static ConvertPtr convert = getConvert();
 
 
 typedef Queue<MonitorElement> MonitorElementQueue;
 typedef std::tr1::shared_ptr<MonitorElementQueue> MonitorElementQueuePtr;
+typedef std::tr1::shared_ptr<MonitorRequester> MonitorRequesterPtr;
 
 
     
 class MonitorLocal :
     public Monitor,
-    public PVCopyMonitorRequester,
+    public PVListener,
     public std::tr1::enable_shared_from_this<MonitorLocal>
 {
+    enum MonitorState {idle,active, destroyed};
 public:
     POINTER_DEFINITIONS(MonitorLocal);
     virtual ~MonitorLocal();
@@ -55,30 +59,37 @@ public:
     virtual Status stop();
     virtual MonitorElementPtr poll();
     virtual void destroy();
+    virtual void detach(PVRecordPtr const & pvRecord){destroy();}
     virtual void release(MonitorElementPtr const & monitorElement);
+    virtual void dataPut(PVRecordFieldPtr const & pvRecordField);
+    virtual void dataPut(
+        PVRecordStructurePtr const & requested,
+        PVRecordFieldPtr const & pvRecordField);
+    virtual void beginGroupPut(PVRecordPtr const & pvRecord);
+    virtual void endGroupPut(PVRecordPtr const & pvRecord);
+    virtual void unlisten(PVRecordPtr const & pvRecord);
     MonitorElementPtr getActiveElement();
-    MonitorElementPtr releaseActiveElement();
-    void unlisten();
+    void releaseActiveElement();
     bool init(PVStructurePtr const & pvRequest);
     MonitorLocal(
         MonitorRequester::shared_pointer const & channelMonitorRequester,
         PVRecordPtr const &pvRecord);
     PVCopyPtr getPVCopy() { return pvCopy;}
-    PVCopyMonitorPtr getPVCopyMonitor() { return pvCopyMonitor;}
 private:
     MonitorLocalPtr getPtrSelf()
     {
         return shared_from_this();
     }
-    MonitorRequester::shared_pointer monitorRequester;
+    MonitorRequester::weak_pointer monitorRequester;
     PVRecordPtr pvRecord;
-    bool isDestroyed;
-    bool firstMonitor;
+    MonitorState state;
     PVCopyPtr pvCopy;
     MonitorElementQueuePtr queue;
     MonitorElementPtr activeElement;
-    PVCopyMonitorPtr pvCopyMonitor;
+    bool isGroupPut;
+    bool dataChanged;
     Mutex mutex;
+    Mutex queueMutex;
 };
 
 MonitorLocal::MonitorLocal(
@@ -86,8 +97,9 @@ MonitorLocal::MonitorLocal(
     PVRecordPtr const &pvRecord)
 : monitorRequester(channelMonitorRequester),
   pvRecord(pvRecord),
-  isDestroyed(false),
-  firstMonitor(true)
+  state(idle),
+  isGroupPut(false),
+  dataChanged(false)
 {
 }
 
@@ -97,52 +109,63 @@ MonitorLocal::~MonitorLocal()
     {
         cout << "MonitorLocal::~MonitorLocal()" << endl;
     }
+    destroy();
 }
 
 void MonitorLocal::destroy()
 {
     if(pvRecord->getTraceLevel()>0)
     {
-        cout << "MonitorLocal::destroy " << isDestroyed << endl;
+        cout << "MonitorLocal::destroy state " << state << endl;
     }
     {
         Lock xx(mutex);
-        if(isDestroyed) return;
-        isDestroyed = true;
+        if(state==destroyed) return;
     }
-    pvCopyMonitor->destroy();
-    pvCopy->destroy();
-    pvCopyMonitor.reset();
-    queue.reset();
-    pvCopy.reset();
+    if(state==active) stop();
+    {
+        Lock xx(mutex);
+        state = destroyed;
+    }
 }
 
 Status MonitorLocal::start()
 {
     if(pvRecord->getTraceLevel()>0)
     {
-        cout << "MonitorLocal::start() "  << endl;
+        cout << "MonitorLocal::start state " << state << endl;
     }
-    if(isDestroyed) return wasDestroyedStatus;
     {
         Lock xx(mutex);
-        firstMonitor = true;
-        queue->clear();
-        activeElement = queue->getFree();
-        activeElement->changedBitSet->clear();
-        activeElement->overrunBitSet->clear();
+        if(state==destroyed) return wasDestroyedStatus;
+        if(state==active) return alreadyStartedStatus;
     }
-    pvCopyMonitor->startMonitoring(activeElement);
+    pvRecord->addListener(getPtrSelf(),pvCopy);
+    epicsGuard <PVRecord> guard(*pvRecord);
+    Lock xx(mutex);
+    state = active;
+    queue->clear();
+    isGroupPut = false;
+    activeElement = queue->getFree();
+    activeElement->changedBitSet->clear();
+    activeElement->overrunBitSet->clear();
+    activeElement->changedBitSet->set(0);
+    releaseActiveElement();
     return Status::Ok;
 }
 
 Status MonitorLocal::stop()
 {
     if(pvRecord->getTraceLevel()>0){
-        cout << "MonitorLocal::stop() "  << endl;
+        cout << "MonitorLocal::stop state " << state << endl;
     }
-    if(isDestroyed) return  Status::Ok;
-    pvCopyMonitor->stopMonitoring();
+    {
+        Lock xx(mutex);
+        if(state==destroyed) return wasDestroyedStatus;
+        if(state==idle) return notStartedStatus;
+        state = idle;
+   }
+    pvRecord->removeListener(getPtrSelf(),pvCopy);
     return Status::Ok;
 }
 
@@ -150,35 +173,39 @@ MonitorElementPtr MonitorLocal::poll()
 {
     if(pvRecord->getTraceLevel()>1)
     {
-        cout << "MonitorLocal::poll() "  << endl;
+        cout << "MonitorLocal::poll state  " << state << endl;
     }
-    if(isDestroyed) return NULLMonitorElement;
-    Lock xx(mutex);
-    return queue->getUsed();
+    {
+        Lock xx(queueMutex);
+        if(state!=active) return NULLMonitorElement;
+        return queue->getUsed();
+    }
 }
 
 void MonitorLocal::release(MonitorElementPtr const & monitorElement)
 {
     if(pvRecord->getTraceLevel()>1)
     {
-        cout << "MonitorLocal::release() "  << endl;
+        cout << "MonitorLocal::release state  " << state << endl;
     }
-    if(isDestroyed) return;
-    Lock xx(mutex);
-    queue->releaseUsed(monitorElement);
+    {
+        Lock xx(queueMutex);
+        if(state!=active) return;
+        queue->releaseUsed(monitorElement);
+    }
 }
 
-MonitorElementPtr MonitorLocal::releaseActiveElement()
+void MonitorLocal::releaseActiveElement()
 {
     if(pvRecord->getTraceLevel()>1)
     {
-        cout << "MonitorLocal::releaseActiveElement() "  << endl;
+        cout << "MonitorLocal::releaseActiveElement  state  " << state << endl;
     }
-    if(isDestroyed) return activeElement;
     {
-        Lock xx(mutex);
+        Lock xx(queueMutex);
+        if(state!=active) return;
         MonitorElementPtr newActive = queue->getFree();
-        if(!newActive) return activeElement;
+        if(!newActive) return;
         pvCopy->updateCopyFromBitSet(activeElement->pvStructurePtr,activeElement->changedBitSet);
         BitSetUtil::compress(activeElement->changedBitSet,activeElement->pvStructurePtr);
         BitSetUtil::compress(activeElement->overrunBitSet,activeElement->pvStructurePtr);
@@ -187,79 +214,168 @@ MonitorElementPtr MonitorLocal::releaseActiveElement()
         activeElement->changedBitSet->clear();
         activeElement->overrunBitSet->clear();
     }
-    monitorRequester->monitorEvent(getPtrSelf());
-    return activeElement;
+    MonitorRequesterPtr requester = monitorRequester.lock();
+    if(!requester) return;
+    requester->monitorEvent(getPtrSelf());
+    return;
 }
 
-void MonitorLocal::unlisten()
+void MonitorLocal::dataPut(PVRecordFieldPtr const & pvRecordField)
 {
-    if(pvRecord->getTraceLevel()>0)
+    if(pvRecord->getTraceLevel()>1)
     {
-        cout << "MonitorLocal::unlisten() "  << endl;
+        cout << "PVCopyMonitor::dataPut(pvRecordField)" << endl;
     }
-    monitorRequester->unlisten(getPtrSelf());
+    if(state!=active) return;
+    {
+        Lock xx(mutex);
+        size_t offset = pvCopy->getCopyOffset(pvRecordField->getPVField());
+        BitSetPtr const &changedBitSet = activeElement->changedBitSet;
+        BitSetPtr const &overrunBitSet = activeElement->overrunBitSet;
+        bool isSet = changedBitSet->get(offset);
+        changedBitSet->set(offset);
+        if(isSet) overrunBitSet->set(offset);
+        dataChanged = true;
+    }
+    if(!isGroupPut) {
+        releaseActiveElement();
+        dataChanged = false;
+    }
 }
+
+void MonitorLocal::dataPut(
+        PVRecordStructurePtr const & requested,
+        PVRecordFieldPtr const & pvRecordField)
+{
+    if(pvRecord->getTraceLevel()>1)
+    {
+        cout << "PVCopyMonitor::dataPut(requested,pvRecordField)" << endl;
+    }
+    if(state!=active) return;
+    {
+        Lock xx(mutex);
+        BitSetPtr const &changedBitSet = activeElement->changedBitSet;
+        BitSetPtr const &overrunBitSet = activeElement->overrunBitSet;
+        size_t offsetCopyRequested = pvCopy->getCopyOffset(
+            requested->getPVField());
+        size_t offset = offsetCopyRequested
+             + (pvRecordField->getPVField()->getFieldOffset()
+                 - requested->getPVField()->getFieldOffset());
+        bool isSet = changedBitSet->get(offset);
+        changedBitSet->set(offset);
+        if(isSet) overrunBitSet->set(offset);
+        dataChanged = true;
+    }
+    if(!isGroupPut) {
+        releaseActiveElement();
+        dataChanged = false;
+    }
+}
+
+void MonitorLocal::beginGroupPut(PVRecordPtr const & pvRecord)
+{
+    if(pvRecord->getTraceLevel()>1)
+    {
+        cout << "PVCopyMonitor::beginGroupPut()" << endl;
+    }
+    if(state!=active) return;
+    {
+        Lock xx(mutex);
+        isGroupPut = true;
+        dataChanged = false;
+    }
+}
+
+void MonitorLocal::endGroupPut(PVRecordPtr const & pvRecord)
+{
+    if(pvRecord->getTraceLevel()>1)
+    {
+        cout << "PVCopyMonitor::endGroupPut dataChanged " << dataChanged << endl;
+    }
+    if(state!=active) return;
+    {
+        Lock xx(mutex);
+        isGroupPut = false;
+    }
+    if(dataChanged) {
+        dataChanged = false;
+        releaseActiveElement();
+    }
+}
+
+void MonitorLocal::unlisten(PVRecordPtr const & pvRecord)
+{
+    if(pvRecord->getTraceLevel()>1)
+    {
+        cout << "PVCopyMonitor::unlisten\n";
+    }
+    MonitorRequesterPtr requester = monitorRequester.lock();
+    if(requester) {
+        if(pvRecord->getTraceLevel()>1)
+        {
+            cout << "PVCopyMonitor::unlisten calling requester->unlisten\n";
+        }
+        requester->unlisten(getPtrSelf());
+    }
+    pvRecord->removeListener(getPtrSelf(),pvCopy);
+}
+
 
 bool MonitorLocal::init(PVStructurePtr const & pvRequest)
 {
     PVFieldPtr pvField;
-    PVStructurePtr pvOptions;
     size_t queueSize = 2;
-    pvField = pvRequest->getSubField("record._options");
-    if(pvField.get()!=NULL) {
-        pvOptions = static_pointer_cast<PVStructure>(pvField);
-        pvField = pvOptions->getSubField("queueSize");
-        if(pvField.get()!=NULL) {
-            PVStringPtr pvString = pvOptions->getStringField("queueSize");
-            if(pvString.get()!=NULL) {
+    PVStructurePtr pvOptions = pvRequest->getSubField<PVStructure>("record._options");
+    MonitorRequesterPtr requester = monitorRequester.lock();
+    if(!requester) return false;
+    if(pvOptions) {
+        PVStringPtr pvString  = pvOptions->getSubField<PVString>("queueSize");
+        if(pvString) {
+            try {
                 int32 size;
                 std::stringstream ss;
                 ss << pvString->get();
                 ss >> size;
                 queueSize = size;
+            } catch (...) {
+                 requester->message("queueSize " +pvString->get() + " illegal",errorMessage);
+                 return false;
             }
         }
     }
-
     pvField = pvRequest->getSubField("field");
-    if(pvField.get()==NULL) {
+    if(!pvField) {
         pvCopy = PVCopy::create(
             pvRecord->getPVRecordStructure()->getPVStructure(),
             pvRequest,"");
-        if(pvCopy.get()==NULL) {
-            monitorRequester->message("illegal pvRequest",errorMessage);
+        if(!pvCopy) {
+            requester->message("illegal pvRequest",errorMessage);
             return false;
         }
     } else {
         if(pvField->getField()->getType()!=structure) {
-            monitorRequester->message("illegal pvRequest",errorMessage);
+            requester->message("illegal pvRequest",errorMessage);
             return false;
         }
         pvCopy = PVCopy::create(
             pvRecord->getPVRecordStructure()->getPVStructure(),
             pvRequest,"field");
-        if(pvCopy.get()==NULL) {
-            monitorRequester->message("illegal pvRequest",errorMessage);
+        if(!pvCopy) {
+            requester->message("illegal pvRequest",errorMessage);
             return false;
         }
     }
-    pvCopyMonitor = PVCopyMonitor::create(
-          getPtrSelf(),pvRecord,pvCopy);
-    // MARTY MUST IMPLEMENT periodic
     if(queueSize<2) queueSize = 2;
     std::vector<MonitorElementPtr> monitorElementArray;
     monitorElementArray.reserve(queueSize);
-    size_t nfields = 0;
     for(size_t i=0; i<queueSize; i++) {
          PVStructurePtr pvStructure = pvCopy->createPVStructure();
-         if(nfields==0) nfields = pvStructure->getNumberFields();
          MonitorElementPtr monitorElement(
              new MonitorElement(pvStructure));
          monitorElementArray.push_back(monitorElement);
     }
     queue = MonitorElementQueuePtr(new MonitorElementQueue(monitorElementArray));
-    // MARTY MUST IMPLEMENT algorithm
-    monitorRequester->monitorConnect(
+    requester->monitorConnect(
         Status::Ok,
         getPtrSelf(),
         pvCopy->getStructure());
@@ -279,7 +395,6 @@ MonitorFactory::~MonitorFactory()
 void MonitorFactory::destroy()
 {
     Lock lock(mutex);
-    if(isDestroyed) return;
     isDestroyed = true;
 }
 
@@ -296,7 +411,12 @@ MonitorPtr MonitorFactory::createMonitor(
     MonitorLocalPtr monitor(new MonitorLocal(
         monitorRequester,pvRecord));
     bool result = monitor->init(pvRequest);
-    if(!result) return nullMonitor;
+    if(!result) {
+        MonitorPtr monitor;
+        StructureConstPtr structure;
+        monitorRequester->monitorConnect(failedToCreateMonitorStatus,monitor,structure);
+        return nullMonitor;
+    }
     if(pvRecord->getTraceLevel()>0)
     {
         cout << "MonitorFactory::createMonitor";
@@ -313,7 +433,7 @@ MonitorFactoryPtr getMonitorFactory()
     static Mutex mutex;
     Lock xx(mutex);
 
-    if(monitorFactoryPtr.get()==NULL) {
+    if(!monitorFactoryPtr) {
         monitorFactoryPtr = MonitorFactoryPtr(
             new MonitorFactory());
     }

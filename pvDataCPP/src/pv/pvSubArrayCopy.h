@@ -1,8 +1,7 @@
 /* pvSubArrayCopy.h */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  * @author Marty Kraimer
@@ -71,7 +70,7 @@ epicsShareExtern void copy(
     PVStructureArray & pvFrom,
     size_t fromOffset,
     size_t fromStride,
-    PVStructureArray & pvToo,
+    PVStructureArray & pvTo,
     size_t toOffset,
     size_t toStride,
     size_t count);
@@ -91,7 +90,7 @@ epicsShareExtern void copy(
     PVArray & pvFrom,
     size_t fromOffset,
     size_t fromStride,
-    PVArray & pvToo,
+    PVArray & pvTo,
     size_t toOffset,
     size_t toStride,
     size_t count);
@@ -111,7 +110,7 @@ epicsShareExtern void copy(
     PVArray::shared_pointer const & pvFrom,
     size_t fromOffset,
     size_t fromStride,
-    PVArray::shared_pointer & pvToo,
+    PVArray::shared_pointer & pvTo,
     size_t toOffset,
     size_t toStride,
     size_t count);

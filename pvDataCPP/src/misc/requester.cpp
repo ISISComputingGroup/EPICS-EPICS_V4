@@ -1,14 +1,16 @@
 /* requester.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
  */
 #include <string>
 #include <cstdio>
+#include <iostream>
+
+#include <epicsMutex.h>
 
 #define epicsExportSharedSymbols
 #include <pv/lock.h>
@@ -34,6 +36,9 @@ string getMessageTypeName(MessageType messageType)
     return messageTypeName[messageType];
 }
 
-
+void Requester::message(std::string const & message,MessageType messageType)
+{
+    std::cerr << "[" << getRequesterName() << "] message(" << message << ", " << getMessageTypeName(messageType) << ")\n";
+}
 
 }}

@@ -1,8 +1,7 @@
 /* standardPVField.h */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
@@ -25,7 +24,8 @@ class StandardPVField;
 typedef std::tr1::shared_ptr<StandardPVField> StandardPVFieldPtr;
 
 /**
- * StandardPVField is a class or creating standard data fields.
+ * @brief StandardPVField is a class or creating standard data fields.
+ *
  * Like class StandardField it has two forms of the methods which create a fields:
  *      one without properties and one with properties.
  * The properties are some combination of alarm, timeStamp, control, display, and valueAlarm.
@@ -53,7 +53,7 @@ public:
     PVStructurePtr scalar(ScalarType type,std::string const & properties);
     /**
      * Create a structure that has a scalar array value field.
-     * @param type The type.
+     * @param elementType The element scalar type.
      * @param properties A comma separated list of properties.
      * This is some combination of "alarm,timeStamp,display,control,valueAlarm".
      * @return The const shared pointer to the structure.
@@ -61,7 +61,7 @@ public:
     PVStructurePtr scalarArray(ScalarType elementType, std::string const & properties);
     /**
      * Create a structure that has a structure array value field.
-     * @param type The type.
+     * @param structure The Structure introspection object for elements of the value field.
      * @param properties A comma separated list of properties.
      * This is some combination of "alarm,timeStamp,display,control,valueAlarm".
      * @return The const shared pointer to the structure.
@@ -69,7 +69,7 @@ public:
     PVStructurePtr structureArray(StructureConstPtr const &structure,std::string const & properties);
     /**
      * Create a structure that has a union array value field.
-     * @param type The type.
+     * @param punion The Union introspection object for elements of the value field.
      * @param properties A comma separated list of properties.
      * This is some combination of "alarm,timeStamp,display,control,valueAlarm".
      * @return The const shared pointer to the structure.

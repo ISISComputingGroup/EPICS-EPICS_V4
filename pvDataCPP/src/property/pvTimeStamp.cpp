@@ -1,8 +1,7 @@
 /* pvTimeStamp.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
@@ -30,11 +29,11 @@ bool PVTimeStamp::attach(PVFieldPtr const & pvField)
     PVStructurePtr xxx = static_pointer_cast<PVStructure>(pvField);
     PVStructure* pvStructure = xxx.get();
     while(true) {
-        PVLongPtr pvLong = pvStructure->getLongField("secondsPastEpoch");
+        PVLongPtr pvLong = pvStructure->getSubField<PVLong>("secondsPastEpoch");
         if(pvLong.get()!=NULL) {
             pvSecs = pvLong;
-            pvNano = pvStructure->getIntField("nanoseconds");
-            pvUserTag = pvStructure->getIntField("userTag");
+            pvNano = pvStructure->getSubField<PVInt>("nanoseconds");
+            pvUserTag = pvStructure->getSubField<PVInt>("userTag");
         }
         if(pvSecs.get()!=NULL
         && pvNano.get()!=NULL
