@@ -10,6 +10,9 @@
 
 /* Author: Marty Kraimer */
 
+#include <epicsUnitTest.h>
+#include <testMain.h>
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstddef>
@@ -27,7 +30,10 @@
 #include <pv/standardPVField.h>
 #include <pv/pvData.h>
 #include <pv/pvAccess.h>
+#define epicsExportSharedSymbols
 #include "powerSupply.h"
+#include "recordClient.h"
+#include "listener.h"
 
 #include <epicsExport.h>
 
@@ -37,10 +43,11 @@ using namespace epics::pvData;
 using namespace epics::pvAccess;
 using namespace epics::pvDatabase;
 
+static bool debug = false;
+static int traceLevel = 0;
 
 
-
-void test()
+static void test()
 {
     StandardPVFieldPtr standardPVField = getStandardPVField();
     string properties;
@@ -51,25 +58,29 @@ void test()
     recordName = "exampleDouble";
     PVStructurePtr pvStructure;
     pvStructure = standardPVField->scalar(scalarType,properties);
-    PVRecordPtr pvRecord = PVRecord::create(recordName,pvStructure);
+    PVRecordPtr exampleRecord = PVRecord::create(recordName,pvStructure);
+    exampleRecord->setTraceLevel(traceLevel);
+    RecordClientPtr exampleRecordClient(RecordClient::create(exampleRecord));
+    ListenerPtr exampleListener(Listener::create(exampleRecord));
     {
-        pvRecord->lock();
-        pvRecord->process();
-        pvRecord->unlock();
+        exampleRecord->lock();
+        exampleRecord->process();
+        exampleRecord->unlock();
     }
-    cout << "processed exampleDouble "  << endl;
-    pvRecord->destroy();
-    pvRecord.reset();
+    if(debug) {cout << "processed exampleDouble "  << endl; }
+    exampleRecord->destroy();
     recordName = "powerSupplyExample";
-    pvStructure.reset();
     PowerSupplyPtr psr;
     pvStructure = createPowerSupply();
     psr = PowerSupply::create("powerSupply",pvStructure);
-    if(psr.get()==NULL) {
-        cout << "PowerSupplyRecordTest::create failed" << endl;
+    psr->setTraceLevel(traceLevel);
+    RecordClientPtr psrRecordClient(RecordClient::create(psr));
+    ListenerPtr psrListener(Listener::create(psr));
+    testOk1(psr.get()!=0);
+    if(!psr) {
+        if(debug) {cout << "PowerSupplyRecordTest::create failed" << endl;}
         return;
     }
-    pvStructure.reset();
     double voltage,power,current;
     {
         psr->lock();
@@ -78,17 +89,24 @@ void test()
         current = psr->getCurrent();
         psr->unlock();
     }
-    cout << "initial ";
-    cout << " voltage " << voltage ;
-    cout << " power " << power;
-    cout <<  " current " << current;
-    cout << endl;
+    if(debug ) {
+        cout << "initial ";
+        cout << " voltage " << voltage ;
+        cout << " power " << power;
+        cout <<  " current " << current;
+        cout << endl;
+    }
+    testOk1(psr->getVoltage()==0.0);
+    testOk1(psr->getPower()==0.0);
+    testOk1(psr->getCurrent()==0.0);
     voltage = 1.0;
     power = 1.0;
-    cout << "before put ";
-    cout << " voltage " << voltage ;
-    cout << " power " << power;
-    cout << endl;
+    if(debug) {
+        cout << "before put ";
+        cout << " voltage " << voltage ;
+        cout << " power " << power;
+        cout << endl;
+    }
     {
         psr->lock();
         psr->put(power,voltage);
@@ -97,21 +115,24 @@ void test()
     }
     {
         psr->lock();
-        cout << "after put ";
-        cout << " voltage " << psr->getVoltage() ;
-        cout << " power " << psr->getPower();
-        cout <<  " current " << psr->getCurrent();
-        cout << endl;
+        if(debug) {
+            cout << "after put ";
+            cout << " voltage " << psr->getVoltage() ;
+            cout << " power " << psr->getPower();
+            cout <<  " current " << psr->getCurrent();
+            cout << endl;
+        }
         psr->unlock();
     }
-    PVDatabasePtr pvDatabase = PVDatabase::getMaster();
-    pvDatabase->addRecord(psr);
-    psr.reset();
-    pvDatabase->destroy();
+    testOk1(psr->getVoltage()==1.0);
+    testOk1(psr->getPower()==1.0);
+    testOk1(psr->getCurrent()==1.0);
+    psr->destroy();
 }
 
-int main(int argc,char *argv[])
+MAIN(testExampleRecord)
 {
+    testPlan(7);
     test();
     return 0;
 }

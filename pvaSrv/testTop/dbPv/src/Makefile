@@ -31,7 +31,7 @@ testDbPvSupport_SRCS += ulongRecord.c
 testDbPvSupport_SRCS += bigstringinRecord.c
 testDbPvSupport_SRCS += waitRecord.c
 testDbPvSupport_SRCS += testDbPv.cpp
-testDbPvSupport_LIBS_WIN32 += pvAccess pvData dbIoc Com
+testDbPvSupport_LIBS = pvAccess pvData $(MBLIB) $(EPICS_BASE_IOC_LIBS)
 
 #=============================
 # Build an IOC application
@@ -47,7 +47,7 @@ testDbPv_SRCS_vxWorks += -nil-
 testDbPv_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
 
 testDbPv_LIBS += testDbPvSupport
-testDbPv_LIBS += pvaSrv pvAccess pvData pvMB
+testDbPv_LIBS += pvaSrv pvAccess pvData $(MBLIB)
 testDbPv_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 #===========================

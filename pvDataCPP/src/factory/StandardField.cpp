@@ -1,8 +1,7 @@
 /* StandardField.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
@@ -10,6 +9,8 @@
 #include <string>
 #include <cstdio>
 #include <stdexcept>
+
+#include <epicsMutex.h>
 
 #define epicsExportSharedSymbols
 #include <pv/lock.h>
@@ -89,9 +90,9 @@ StructureConstPtr StandardField::createProperties(string id,FieldConstPtr field,
         }
         if(type==structure) {
             StructureConstPtr structurePtr = static_pointer_cast<const Structure>(field);
-            StringArray names = structurePtr->getFieldNames();
+            StringArray const & names = structurePtr->getFieldNames();
             if(names.size()==2) {
-                FieldConstPtrArray fields = structurePtr->getFields();
+                FieldConstPtrArray const & fields = structurePtr->getFields();
                 FieldConstPtr first = fields[0];
                 FieldConstPtr second = fields[1];
                 string nameFirst = names[0];
@@ -554,7 +555,7 @@ StructureConstPtr StandardField::enumerated()
     fields[0] = fieldCreate->createScalar(pvInt);
     fields[1] = fieldCreate->createScalarArray(pvString);
     return fieldCreate->createStructure("enum_t",names,fields);
-    // NOTE: if this method is used to get NTEnum wihtout properties the ID will be wrong!
+    // NOTE: if this method is used to get NTEnum without properties the ID will be wrong!
 }
 
 StructureConstPtr StandardField::enumerated(string  const &properties)

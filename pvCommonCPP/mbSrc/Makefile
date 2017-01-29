@@ -2,14 +2,17 @@ TOP = ..
 include $(TOP)/configure/CONFIG
 
 ifdef WITH_MICROBENCH
-    USR_CPPFLAGS += -DWITH_MICROBENCH -I$(TOP)/include
+    USR_CPPFLAGS += -DWITH_MICROBENCH
 endif
 
 INSTALL_INCLUDE = $(INSTALL_LOCATION)/include/pv
+USR_CPPFLAGS += -I$(INSTALL_LOCATION)/include
 
 INC += mb.h
 
 LIBRARY = pvMB
+
+SHRLIB_VERSION ?= 4.2.2
 
 pvMB_SRCS += mb.cpp
 pvMB_LIBS = Com

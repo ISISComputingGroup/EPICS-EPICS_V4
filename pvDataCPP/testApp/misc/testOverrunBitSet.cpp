@@ -1,8 +1,7 @@
 /* testOverrunBitSet.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /* Author:  Marty Kraimer Date: 2013.09.16 */
 
@@ -32,17 +31,17 @@ void test()
      string buffer;
      string properties("alarm,timeStamp,display");
      PVStructurePtr pvStructure = standardPVField->scalar(pvDouble,properties);
-     PVDoublePtr pvValue = pvStructure->getDoubleField("value");
+     PVDoublePtr pvValue = pvStructure->getSubField<PVDouble>("value");
      uint32 valueOffset = (uint32) pvValue->getFieldOffset();
-     PVStructurePtr pvAlarm = pvStructure->getStructureField("alarm");
-     PVIntPtr pvSeverity = pvAlarm->getIntField("severity");
-     PVStringPtr pvMessage = pvAlarm->getStringField("message");
+     PVStructurePtr pvAlarm = pvStructure->getSubField<PVStructure>("alarm");
+     PVIntPtr pvSeverity = pvAlarm->getSubField<PVInt>("severity");
+     PVStringPtr pvMessage = pvAlarm->getSubField<PVString>("message");
      uint32 severityOffset = (uint32) pvSeverity->getFieldOffset();
      uint32 messageOffset = (uint32) pvMessage->getFieldOffset();
-     PVStructurePtr pvTimeStamp = pvStructure->getStructureField("timeStamp");
-     PVLongPtr pvSeconds = pvTimeStamp->getLongField("secondsPastEpoch");
-     PVIntPtr pvNanoseconds = pvTimeStamp->getIntField("nanoseconds");
-     PVIntPtr pvUserTag = pvTimeStamp->getIntField("userTag");
+     PVStructurePtr pvTimeStamp = pvStructure->getSubField<PVStructure>("timeStamp");
+     PVLongPtr pvSeconds = pvTimeStamp->getSubField<PVLong>("secondsPastEpoch");
+     PVIntPtr pvNanoseconds = pvTimeStamp->getSubField<PVInt>("nanoseconds");
+     PVIntPtr pvUserTag = pvTimeStamp->getSubField<PVInt>("userTag");
      uint32 timeStampOffset = (uint32) pvTimeStamp->getFieldOffset();
      uint32 secondsOffset = (uint32) pvSeconds->getFieldOffset();
      uint32 nanosecondsOffset = (uint32) pvNanoseconds->getFieldOffset();

@@ -1,8 +1,7 @@
 /*bitSetUtil.cpp*/
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
@@ -38,7 +37,7 @@ static bool checkBitSetPVField(
     PVStructurePtr pvStructure = static_pointer_cast<PVStructure>(pvField);
     offset = static_cast<int32>(pvStructure->getFieldOffset()) + 1;
     while(offset<initialOffset + nbits) {
-        PVFieldPtr pvSubField = pvStructure->getSubField(offset);
+        PVFieldPtr pvSubField = pvStructure->getSubFieldT(offset);
         int32 nbitsNow = static_cast<int32>(pvSubField->getNumberFields());
         if(nbitsNow==1) {
             if(bitSet->get(offset)) {

@@ -1,8 +1,7 @@
-/* testPVdata.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/* testProperty.cpp */
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /* Author:  Marty Kraimer Date: 2010.11 */
 
@@ -19,7 +18,6 @@
 #include <pv/requester.h>
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
-#include <pv/convert.h>
 #include <pv/standardField.h>
 #include <pv/standardPVField.h>
 #include <pv/alarm.h>
@@ -41,7 +39,6 @@ static FieldCreatePtr fieldCreate;
 static PVDataCreatePtr pvDataCreate;
 static StandardFieldPtr standardField;
 static StandardPVFieldPtr standardPVField;
-static ConvertPtr convert;
 static string alarmTimeStamp("alarm,timeStamp");
 static string allProperties("alarm,timeStamp,display,control");
 
@@ -73,7 +70,7 @@ static void testAlarm()
     Alarm alarm;
     PVAlarm pvAlarm; 
     bool result;
-    PVFieldPtr pvField = doubleRecord->getSubField(string("alarm"));
+    PVFieldPtr pvField = doubleRecord->getSubField<PVStructure>(string("alarm"));
     if(pvField.get()==NULL) {
         printf("testAlarm ERROR did not find field alarm\n");
         return;
@@ -106,7 +103,7 @@ static void testTimeStamp()
     TimeStamp timeStamp;
     PVTimeStamp pvTimeStamp; 
     bool result;
-    PVFieldPtr pvField = doubleRecord->getSubField(string("timeStamp"));
+    PVFieldPtr pvField = doubleRecord->getSubField<PVStructure>(string("timeStamp"));
     if(pvField.get()==NULL) {
         printf("testTimeStamp ERROR did not find field timeStamp\n");
         return;
@@ -131,9 +128,9 @@ static void testTimeStamp()
             "%4.4d.%2.2d.%2.2d %2.2d:%2.2d:%2.2d %d nanoseconds isDst %s userTag %d\n",
             ctm.tm_year+1900,ctm.tm_mon + 1,ctm.tm_mday,
             ctm.tm_hour,ctm.tm_min,ctm.tm_sec,
-            timeStamp.getNanoseconds(),
+            (int)timeStamp.getNanoseconds(),
             (ctm.tm_isdst==0) ? "false" : "true",
-            timeStamp.getUserTag());
+            (int)timeStamp.getUserTag());
     }
     timeStamp.put(0,0);
     pvTimeStamp.set(timeStamp);
@@ -146,7 +143,7 @@ static void testControl()
     Control control;
     PVControl pvControl; 
     bool result;
-    PVFieldPtr pvField = doubleRecord->getSubField(string("control"));
+    PVFieldPtr pvField = doubleRecord->getSubField<PVStructure>(string("control"));
     if(pvField.get()==NULL) {
         printf("testControl ERROR did not find field control\n");
         return;
@@ -173,7 +170,7 @@ static void testDisplay()
     Display display;
     PVDisplay pvDisplay; 
     bool result;
-    PVFieldPtr pvField = doubleRecord->getSubField(string("display"));
+    PVFieldPtr pvField = doubleRecord->getSubField<PVStructure>(string("display"));
     if(pvField.get()==NULL) {
         printf("testDisplay ERROR did not find field display\n");
         return;
@@ -205,7 +202,7 @@ static void testEnumerated()
     if(debug) printf("testEnumerated\n");
     PVEnumerated pvEnumerated; 
     bool result;
-    PVFieldPtr pvField = enumeratedRecord->getSubField(string("value"));
+    PVFieldPtr pvField = enumeratedRecord->getSubField<PVStructure>(string("value"));
     if(pvField.get()==NULL) {
         printf("testEnumerated ERROR did not find field enumerated\n");
         return;
@@ -217,14 +214,14 @@ static void testEnumerated()
     PVStringArray::const_svector choices = pvEnumerated.getChoices();
     int32 numChoices = pvEnumerated.getNumberChoices();
     if(debug) {
-        printf("index %d choice %s choices",index,choice.c_str());
+        printf("index %d choice %s choices",(int)index,choice.c_str());
         for(int i=0; i<numChoices; i++ ) printf(" %s",choices[i].c_str());
         printf("\n");
     }
     pvEnumerated.setIndex(2);
     index = pvEnumerated.getIndex();
     choice = pvEnumerated.getChoice();
-    if(debug) printf("index %d choice %s\n",index,choice.c_str());
+    if(debug) printf("index %d choice %s\n",(int)index,choice.c_str());
     printf("testEnumerated PASSED\n");
 }
 
@@ -236,7 +233,6 @@ MAIN(testProperty)
     pvDataCreate = getPVDataCreate();
     standardField = getStandardField();
     standardPVField = getStandardPVField();
-    convert = getConvert();
     createRecords();
     testAlarm();
     testTimeStamp();

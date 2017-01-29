@@ -1,7 +1,6 @@
 /**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution.
  */
 /**
  * @author mrk
@@ -86,9 +85,9 @@ void DbGroupGet::get(bool lastRequest)
         if(alarm.getSeverity()>maxAlarm.getSeverity()) maxAlarm = alarm;
         convert->copy(pvValue,pvFields[i+2]);
     }
-    pvAlarm.attach(pvTop->getSubField("alarm"));
+    pvAlarm.attach(pvTop->getSubFieldT("alarm"));
     pvAlarm.set(maxAlarm);
-    pvTimeStamp.attach(pvTop->getSubField("timeStamp"));
+    pvTimeStamp.attach(pvTop->getSubFieldT("timeStamp"));
     timeStamp.getCurrent();
     pvTimeStamp.set(timeStamp);
     bitSet->clear();

@@ -1,8 +1,7 @@
 /*PVUnion.cpp*/
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mse
@@ -16,7 +15,6 @@
 #define epicsExportSharedSymbols
 #include <pv/pvData.h>
 #include <pv/pvIntrospect.h>
-#include <pv/convert.h>
 #include <pv/factory.h>
 #include <pv/serializeHelper.h>
 
@@ -28,6 +26,8 @@ namespace epics { namespace pvData {
 	
 #define PVUNION_UNDEFINED_INDEX -1
 int32 PVUnion::UNDEFINED_INDEX = PVUNION_UNDEFINED_INDEX;
+
+PVDataCreatePtr PVUnion::pvDataCreate(getPVDataCreate());
 
 PVUnion::PVUnion(UnionConstPtr const & unionPtr)
 : PVField(unionPtr),
@@ -87,7 +87,7 @@ PVFieldPtr PVUnion::select(int32 index)
 
     FieldConstPtr field = unionPtr->getField(index);
     selector = index;
-    value = getPVDataCreate()->createPVField(field);
+    value = pvDataCreate->createPVField(field);
 
     return value;
 }
@@ -144,10 +144,10 @@ void PVUnion::serialize(ByteBuffer *pbuffer, SerializableControl *pflusher) cons
     if (variant)
     {
         // write introspection data
-        if (value.get() == 0)
+        if (value.get() == 0) {
+            pflusher->ensureBuffer(1);
             pbuffer->put((int8)-1);
-        else
-        {
+        }else {
             pflusher->cachedSerialize(value->getField(), pbuffer);
             value->serialize(pbuffer, pflusher);
         }
@@ -171,7 +171,7 @@ void PVUnion::deserialize(ByteBuffer *pbuffer, DeserializableControl *pcontrol)
         {
             // try to reuse existing field instance
             if (!value.get() || *value->getField() != *field)
-                value = getPVDataCreate()->createPVField(field);
+                value = pvDataCreate->createPVField(field);
             value->deserialize(pbuffer, pcontrol);
         }
         else
@@ -188,7 +188,7 @@ void PVUnion::deserialize(ByteBuffer *pbuffer, DeserializableControl *pcontrol)
                 FieldConstPtr field = unionPtr->getField(selector);
                 // try to reuse existing field instance
                 if (!value.get() || *value->getField() != *field)
-                    value = getPVDataCreate()->createPVField(field);
+                    value = pvDataCreate->createPVField(field);
             }
             value->deserialize(pbuffer, pcontrol);
         }
@@ -216,5 +216,58 @@ std::ostream& PVUnion::dumpValue(std::ostream& o) const
     }
  	return o;
 }
+
+void PVUnion::copy(const PVUnion& from)
+{
+    if(isImmutable())
+        throw std::invalid_argument("destination is immutable");
+
+    if(*getUnion() != *from.getUnion())
+        throw std::invalid_argument("union definitions do not match");
+
+    copyUnchecked(from);
+}
+
+void PVUnion::copyUnchecked(const PVUnion& from)
+{
+
+    PVFieldPtr fromValue = from.get();
+    if (from.getUnion()->isVariant())
+    {
+        if (fromValue.get() == 0)
+        {
+            set(PVField::shared_pointer());
+        }
+        else
+        {
+            PVFieldPtr toValue = get();
+            if (toValue.get() == 0 || *toValue->getField() != *fromValue->getField())
+            {
+                toValue = pvDataCreate->createPVField(fromValue->getField());
+                toValue->copyUnchecked(*fromValue);
+                set(toValue);
+            }
+            else
+            {
+                toValue->copyUnchecked(*fromValue);
+                postPut();
+            }
+        }
+    }
+    else
+    {
+        if (fromValue.get() == 0)
+        {
+            select(PVUnion::UNDEFINED_INDEX);
+        }
+        else
+        {
+            select(from.getSelectedIndex())->copyUnchecked(*fromValue);
+        }
+        postPut();
+    }
+
+}
+
 
 }}

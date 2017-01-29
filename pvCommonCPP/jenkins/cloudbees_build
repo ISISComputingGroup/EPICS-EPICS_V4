@@ -4,9 +4,25 @@
 # Jenkins invokes scripts with the "-ex" option. So the build is considered a failure
 # if any of the commands exits with a non-zero exit code.
 #
-# Author: Ralph Lange <Ralph.Lange@gmx.de>
+# Author: Ralph Lange <ralph.lange@gmx.de>
 # Copyright (C) 2013 Helmholtz-Zentrum Berlin für Materialien und Energie GmbH
+# Copyright (C) 2014-2016 ITER Organization.
 # All rights reserved. Use is subject to license terms.
+
+installTool () {
+    local module=$1
+    local version=$2
+
+    wget -nv https://openepics.ci.cloudbees.com/job/${module}-${version}_Build/lastSuccessfulBuild/artifact/${module,,}-${version}.CB-dist.tar.gz
+    tar -xzf ${module,,}-${version}.CB-dist.tar.gz
+}
+
+###########################################
+# Defaults for EPICS Base and MB
+
+DEFAULT_BASE=3.15.4
+BASE=${BASE:-${DEFAULT_BASE}}
+MB=${MB:-"NO_MICROBENCH"}
 
 ###########################################
 # Fetch and unpack dependencies
@@ -17,10 +33,8 @@ rm -fr ${STUFF}
 mkdir -p ${STUFF}
 cd ${STUFF}
 
-wget -nv https://openepics.ci.cloudbees.com/job/Base-3.14.12.3_Build/lastSuccessfulBuild/artifact/baseR3.14.12.3.CB-dist.tar.gz
-wget -nv https://openepics.ci.cloudbees.com/job/Doxygen-1.8.3_Build/lastSuccessfulBuild/artifact/doxygen-1.8.3.CB-dist.tar.gz
-tar -xzf baseR3.14.12.3.CB-dist.tar.gz
-tar -xzf doxygen-1.8.3.CB-dist.tar.gz
+installTool Boost 1.61.0
+installTool Base ${BASE}
 
 ###########################################
 # Build
@@ -36,13 +50,14 @@ cat > configure/RELEASE.local << EOF
 EPICS_BASE=${EPICS_BASE}
 EOF
 
-# Set WITH_MICROBENCH so the testBoost program is built
-cat > configure/CONFIG_SITE.local << EOF
-WITH_MICROBENCH=1
-EOF
+if [ "${MB}" = "WITH_MICROBENCH" ]; then
+	# must use TAB characters here
+	cat > configure/CONFIG_SITE.local <<- EOF
+	WITH_MICROBENCH=1
+	EOF
+fi
 
 make distclean all
-doxygen
 
 ###########################################
 # Test
@@ -54,9 +69,4 @@ done
 ###########################################
 # Create distribution
 
-tar czf pvCommon.CB-dist.tar.gz lib include COPYRIGHT LICENSE
-
-###########################################
-# Publish documentation
-
-rsync -aP --delete -e ssh documentation epics-jenkins@web.sourceforge.net:/home/project-web/epics-pvdata/htdocs/docbuild/pvCommonCPP/tip
+tar czf pvCommon.CB-dist.tar.gz lib include LICENSE

@@ -10,10 +10,8 @@
 #include <cadef.h>
 #include <epicsSignal.h>
 
-#include <pv/logger.h>
-
 #define epicsExportSharedSymbols
-
+#include <pv/logger.h>
 #include <pv/caProvider.h>
 #include <pv/caChannel.h>
 
@@ -27,13 +25,15 @@ using namespace epics::pvAccess::ca;
 
 std::string CAChannelProvider::PROVIDER_NAME = "ca";
 
-CAChannelProvider::CAChannelProvider() : current_context(0)
+CAChannelProvider::CAChannelProvider() : current_context(0), destroyed(false)
 {
     initialize();
 }
 
 CAChannelProvider::~CAChannelProvider()
 {
+    // call destroy() to destroy CA context
+    destroy();
 }
 
 std::string CAChannelProvider::getProviderName()
@@ -42,8 +42,8 @@ std::string CAChannelProvider::getProviderName()
 }
 
 ChannelFind::shared_pointer CAChannelProvider::channelFind(
-        std::string const & channelName,
-        ChannelFindRequester::shared_pointer const & channelFindRequester)
+    std::string const & channelName,
+    ChannelFindRequester::shared_pointer const & channelFindRequester)
 {
     if (channelName.empty())
         throw std::invalid_argument("empty channel name");
@@ -58,7 +58,7 @@ ChannelFind::shared_pointer CAChannelProvider::channelFind(
 }
 
 ChannelFind::shared_pointer CAChannelProvider::channelList(
-        ChannelListRequester::shared_pointer const & channelListRequester)
+    ChannelListRequester::shared_pointer const & channelListRequester)
 {
     if (!channelListRequester.get())
         throw std::runtime_error("null requester");
@@ -71,9 +71,9 @@ ChannelFind::shared_pointer CAChannelProvider::channelList(
 }
 
 Channel::shared_pointer CAChannelProvider::createChannel(
-        std::string const & channelName,
-        ChannelRequester::shared_pointer const & channelRequester,
-        short priority)
+    std::string const & channelName,
+    ChannelRequester::shared_pointer const & channelRequester,
+    short priority)
 {
     threadAttach();
 
@@ -82,10 +82,10 @@ Channel::shared_pointer CAChannelProvider::createChannel(
 }
 
 Channel::shared_pointer CAChannelProvider::createChannel(
-        std::string const & channelName,
-        ChannelRequester::shared_pointer const & channelRequester,
-        short priority,
-        std::string const & address)
+    std::string const & channelName,
+    ChannelRequester::shared_pointer const & channelRequester,
+    short priority,
+    std::string const & address)
 {
     if (!address.empty())
         throw std::invalid_argument("CA does not support 'address' parameter");
@@ -109,11 +109,17 @@ void CAChannelProvider::destroy()
 {
     Lock lock(channelsMutex);
     {
+        if (destroyed)
+            return;
+        destroyed = true;
+
         while (!channels.empty())
         {
-            Channel::shared_pointer channel = channels.rbegin()->second.lock();
+            Channel::shared_pointer channel = channels.begin()->second.lock();
             if (channel)
                 channel->destroy();
+            else
+                channels.erase(channels.begin());
         }
     }
 
@@ -138,13 +144,19 @@ void CAChannelProvider::unregisterChannel(Channel::shared_pointer const & channe
     channels.erase(channel.get());
 }
 
+void CAChannelProvider::unregisterChannel(Channel* pchannel)
+{
+    Lock lock(channelsMutex);
+    channels.erase(pchannel);
+}
+
 void CAChannelProvider::initialize()
 {
     /* Create Channel Access */
     int result = ca_context_create(ca_enable_preemptive_callback);
     if (result != ECA_NORMAL) {
         throw std::runtime_error(std::string("CA error %s occurred while trying "
-                "to start channel access:") + ca_message(result));
+                                             "to start channel access:") + ca_message(result));
     }
 
     current_context = ca_current_context();
@@ -212,6 +224,7 @@ public:
 
     void destroySharedInstance()
     {
+        if(!sharedProvider) return;
         sharedProvider->destroy();
         sharedProvider.reset();
     }

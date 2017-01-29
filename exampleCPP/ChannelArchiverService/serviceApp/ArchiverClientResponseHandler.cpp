@@ -1,8 +1,6 @@
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS exampleCPP is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
- */
+// Copyright information and license terms for this software can be
+// found in the file LICENSE that is included with the distribution
+
 
 #include <algorithm>
 #include <cstdio>
@@ -182,7 +180,7 @@ void RequestResponseHandler::makeStrings(epics::pvData::PVStructurePtr const & r
     using namespace epics::pvData;
     using namespace std;
 
-    PVStructurePtr responseValues = response->getStructureField("value");
+    PVStructurePtr responseValues = response->getSubField<PVStructure>("value");
     if (!responseValues)
     {
         cerr << "Data invalid: No value field in table." << endl;

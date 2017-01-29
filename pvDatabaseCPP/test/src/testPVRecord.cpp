@@ -9,6 +9,8 @@
  */
 
 /* Author: Marty Kraimer */
+#include <epicsUnitTest.h>
+#include <testMain.h>
 
 #include <cstddef>
 #include <cstdlib>
@@ -27,6 +29,7 @@
 #include <pv/standardPVField.h>
 #include <pv/pvData.h>
 #include <pv/pvCopy.h>
+#define epicsExportSharedSymbols
 #include "powerSupply.h"
 
 
@@ -36,6 +39,8 @@ using namespace epics::pvData;
 using namespace epics::pvDatabase;
 using std::string;
 
+static bool debug = false;
+
 static PVRecordPtr createScalar(
     string const & recordName,
     ScalarType scalarType,
@@ -43,7 +48,6 @@ static PVRecordPtr createScalar(
 {
     PVStructurePtr pvStructure = getStandardPVField()->scalar(scalarType,properties);
     PVRecordPtr pvRecord = PVRecord::create(recordName,pvStructure);
-    pvStructure.reset();
     return pvRecord;
 }
 
@@ -58,31 +62,44 @@ static PVRecordPtr createScalarArray(
 
 static void scalarTest()
 {
-    cout << endl << endl << "****scalarTest****" << endl;
+    if(debug) {cout << endl << endl << "****scalarTest****" << endl; }
     PVRecordPtr pvRecord;
     pvRecord = createScalar("doubleRecord",pvDouble,"alarm,timeStamp.display");
+    testOk1(pvRecord.get()!=0);
+    if(pvRecord && debug) {
+          cout << pvRecord << endl;
+    }
     pvRecord->destroy();
 }
 
 static void arrayTest()
 {
-    cout << endl << endl << "****arrayTest****" << endl;
+    if(debug) {cout << endl << endl << "****arrayTest****" << endl; }
     PVRecordPtr pvRecord;
     pvRecord = createScalarArray("doubleArrayRecord",pvDouble,"alarm,timeStamp");
+    testOk1(pvRecord.get()!=0);
+    if(pvRecord && debug) {
+          cout << pvRecord << endl;
+    }
     pvRecord->destroy();
 }
 
 static void powerSupplyTest()
 {
-    cout << endl << endl << "****powerSupplyTest****" << endl;
+    if(debug) {cout << endl << endl << "****powerSupplyTest****" << endl; }
     PVRecordPtr pvRecord;
     PVStructurePtr pv = createPowerSupply();
     pvRecord = PowerSupply::create("powerSupply",pv);
+    testOk1(pvRecord.get()!=0);
+    if(pvRecord && debug) {
+          cout << pvRecord << endl;
+    }
     pvRecord->destroy();
 }
 
-int main(int argc,char *argv[])
+MAIN(testPVRecord)
 {
+    testPlan(3);
     scalarTest();
     arrayTest();
     powerSupplyTest();

@@ -1,8 +1,7 @@
-/*pvData.cpp*/
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*status.cpp*/
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
@@ -17,7 +16,6 @@ using std::string;
 namespace epics { namespace pvData {
 
 const char* Status::StatusTypeName[] = { "OK", "WARNING", "ERROR", "FATAL" };
-string Status::m_emptyStringtring;
 
 Status Status::Ok;
 
@@ -102,7 +100,8 @@ void Status::deserialize(ByteBuffer *buffer, DeserializableControl *flusher)
 	   if (m_statusType != STATUSTYPE_OK)
 	   {
 	       m_statusType = STATUSTYPE_OK;
-	       m_message = m_stackDump = m_emptyStringtring;
+           m_message.clear();
+           m_stackDump.clear();
 	   }
 	}
 	else

@@ -1,8 +1,7 @@
 /* testStandardPVField.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /* Author:  Marty Kraimer Date: 2012.08 */
 
@@ -36,7 +35,7 @@ static StandardPVFieldPtr standardPVField = getStandardPVField();
 static void print(const string& name, PVFieldPtr const & f)
 {
     if(debug) {
-        std::cout << std::endl << name << std::endl << *f << std::endl;
+        std::cout << std::endl << name << std::endl << f << std::endl;
     }
 }
 
@@ -45,11 +44,11 @@ MAIN(testStandardPVField)
     testPlan(1);
     PVStructurePtr pvStructure = standardPVField->scalar(pvDouble,
         "alarm,timeStamp,display,control,valueAlarm");
-    PVDoublePtr pvValue = pvStructure->getDoubleField("value");
+    PVDoublePtr pvValue = pvStructure->getSubField<PVDouble>("value");
     pvValue->put(10.0);
-    PVIntPtr pvSeverity = pvStructure->getIntField("alarm.severity");
+    PVIntPtr pvSeverity = pvStructure->getSubField<PVInt>("alarm.severity");
     pvSeverity->put(2);
-    PVStringPtr pvMessage = pvStructure->getStringField("alarm.message");
+    PVStringPtr pvMessage = pvStructure->getSubField<PVString>("alarm.message");
     pvMessage->put("test message");
     print("scalarTest", pvStructure);
     pvStructure = standardPVField->scalar(pvBoolean,"alarm,timeStamp,valueAlarm");
@@ -71,7 +70,7 @@ MAIN(testStandardPVField)
         pvStructures[i]=
             pvDataCreate->createPVStructure(structure);
     }
-    PVStructureArrayPtr pvStructureArray = pvStructure->getStructureArrayField("value");
+    PVStructureArrayPtr pvStructureArray = pvStructure->getSubField<PVStructureArray>("value");
     pvStructureArray->replace(freeze(pvStructures));
     print("structureArrayTest", pvStructure);
     testPass("testStandardPVField");

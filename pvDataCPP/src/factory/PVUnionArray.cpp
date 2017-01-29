@@ -1,8 +1,7 @@
 /*PVUnionArray.cpp*/
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
@@ -14,7 +13,6 @@
 
 #define epicsExportSharedSymbols
 #include <pv/pvData.h>
-#include <pv/convert.h>
 #include <pv/factory.h>
 #include <pv/serializeHelper.h>
 
@@ -178,7 +176,7 @@ void PVUnionArray::deserialize(ByteBuffer *pbuffer,
             data[i].reset();
         }
         else {
-            if(data[i].get()==NULL) {
+            if(data[i].get()==NULL || !data[i].unique()) {
                 data[i] = pvDataCreate->createPVUnion(punion);
             }
             data[i]->deserialize(pbuffer, pcontrol);
@@ -240,5 +238,25 @@ std::ostream& PVUnionArray::dumpValue(std::ostream& o, std::size_t index) const
     }
     return o;
 }
+
+void PVUnionArray::copy(const PVUnionArray& from)
+{
+    if(isImmutable())
+        throw std::invalid_argument("destination is immutable");
+
+    if(*getUnionArray() != *from.getUnionArray())
+        throw std::invalid_argument("unionArray definitions do not match");
+
+    copyUnchecked(from);
+}
+
+void PVUnionArray::copyUnchecked(const PVUnionArray& from)
+{
+    if (this == &from)
+        return;
+
+    replace(from.view());
+}
+
 
 }}

@@ -1,14 +1,13 @@
 /*PVDataCreateFactory.cpp*/
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
  */
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(NOMINMAX)
 #define NOMINMAX
 #endif
 
@@ -17,11 +16,12 @@
 #include <string>
 #include <cstdio>
 
+#include <epicsMutex.h>
+
 #define epicsExportSharedSymbols
 #include <pv/lock.h>
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
-#include <pv/convert.h>
 #include <pv/factory.h>
 #include <pv/serializeHelper.h>
 
@@ -527,7 +527,7 @@ PVFieldPtr PVDataCreate::createPVField(PVFieldPtr const & fieldToClone)
              PVStructurePtr pvStructure
                    = static_pointer_cast<PVStructure>(fieldToClone);
              StringArray const & fieldNames = pvStructure->getStructure()->getFieldNames();
-             PVFieldPtrArray pvFieldPtrArray = pvStructure->getPVFields();
+             PVFieldPtrArray const & pvFieldPtrArray = pvStructure->getPVFields();
              return createPVStructure(fieldNames,pvFieldPtrArray);
          }
      case structureArray:
@@ -537,7 +537,7 @@ PVFieldPtr PVDataCreate::createPVField(PVFieldPtr const & fieldToClone)
              StructureArrayConstPtr structureArray = from->getStructureArray();
              PVStructureArrayPtr to = createPVStructureArray(
                  structureArray);
-             getConvert()->copyStructureArray(from, to);
+             to->copyUnchecked(*from);
              return to;
          }
      case union_:
@@ -552,7 +552,7 @@ PVFieldPtr PVDataCreate::createPVField(PVFieldPtr const & fieldToClone)
                  = static_pointer_cast<PVUnionArray>(fieldToClone);
              UnionArrayConstPtr unionArray = from->getUnionArray();
              PVUnionArrayPtr to = createPVUnionArray(unionArray);
-             getConvert()->copyUnionArray(from, to);
+             to->copyUnchecked(*from);
              return to;
          }
      }
@@ -602,7 +602,7 @@ PVScalarPtr PVDataCreate::createPVScalar(PVScalarPtr const & scalarToClone)
 {
      ScalarType scalarType = scalarToClone->getScalar()->getScalarType();
      PVScalarPtr pvScalar = createPVScalar(scalarType);
-     getConvert()->copyScalar(scalarToClone, pvScalar);
+     pvScalar->copyUnchecked(*scalarToClone);
      return pvScalar;
 }
 
@@ -712,7 +712,7 @@ PVStructurePtr PVDataCreate::createPVStructure(PVStructurePtr const & structToCl
     }
     StructureConstPtr structure = structToClone->getStructure();
     PVStructurePtr pvStructure(new PVStructure(structure));
-    getConvert()->copyStructure(structToClone,pvStructure);
+    pvStructure->copyUnchecked(*structToClone);
     return pvStructure;
 }
 
@@ -741,3 +741,12 @@ PVDataCreatePtr getPVDataCreate() {
 }
 
 }}
+
+namespace std{
+    std::ostream& operator<<(std::ostream& o, const epics::pvData::PVField *ptr)
+    {
+        if(ptr) return o << *ptr;
+        return o << "nullptr";
+    }
+}
+

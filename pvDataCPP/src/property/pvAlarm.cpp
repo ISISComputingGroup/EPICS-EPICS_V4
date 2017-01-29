@@ -1,8 +1,7 @@
 /* pvAlarm.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
@@ -28,14 +27,14 @@ bool PVAlarm::attach(PVFieldPtr const & pvField)
 {
     if(pvField->getField()->getType()!=structure) return false;
     PVStructurePtr pvStructure = static_pointer_cast<PVStructure>(pvField);
-    pvSeverity = pvStructure->getIntField("severity");
+    pvSeverity = pvStructure->getSubField<PVInt>("severity");
     if(pvSeverity.get()==NULL) return false;
-    pvStatus = pvStructure->getIntField("status");
+    pvStatus = pvStructure->getSubField<PVInt>("status");
     if(pvStatus.get()==NULL) {
         pvSeverity.reset();
         return false;
     }
-    pvMessage = pvStructure->getStringField("message");
+    pvMessage = pvStructure->getSubField<PVString>("message");
     if(pvMessage.get()==NULL) {
         pvSeverity.reset();
         pvStatus.reset();

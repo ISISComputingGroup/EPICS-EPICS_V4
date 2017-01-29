@@ -1,8 +1,7 @@
 /* StandardPVField.cpp */
-/**
- * Copyright - See the COPYRIGHT that is included with this distribution.
- * EPICS pvData is distributed subject to a Software License Agreement found
- * in file LICENSE that is included with this distribution.
+/*
+ * Copyright information and license terms for this software can be
+ * found in the file LICENSE that is included with the distribution
  */
 /**
  *  @author mrk
@@ -10,11 +9,12 @@
 #include <string>
 #include <stdexcept>
 
+#include <epicsMutex.h>
+
 #define epicsExportSharedSymbols
 #include <pv/lock.h>
 #include <pv/pvIntrospect.h>
 #include <pv/pvData.h>
-#include <pv/convert.h>
 #include <pv/standardField.h>
 #include <pv/standardPVField.h>
 
@@ -67,11 +67,9 @@ PVStructurePtr StandardPVField::enumerated(StringArray const &choices)
 {
     StructureConstPtr field = standardField->enumerated();
     PVStructurePtr pvStructure = pvDataCreate->createPVStructure(field);
-    PVScalarArrayPtr pvScalarArray = pvStructure->getScalarArrayField(
-        "choices",pvString);
     PVStringArray::svector cdata(choices.size());
     std::copy(choices.begin(), choices.end(), cdata.begin());
-    static_cast<PVStringArray&>(*pvScalarArray).replace(freeze(cdata));
+    pvStructure->getSubFieldT<PVStringArray>("choices")->replace(freeze(cdata));
     return pvStructure;
 }
 
@@ -80,11 +78,9 @@ PVStructurePtr StandardPVField::enumerated(
 {
     StructureConstPtr field = standardField->enumerated(properties);
     PVStructurePtr pvStructure =  pvDataCreate->createPVStructure(field);
-    PVScalarArrayPtr pvScalarArray = pvStructure->getScalarArrayField(
-        "value.choices",pvString);
     PVStringArray::svector cdata(choices.size());
     std::copy(choices.begin(), choices.end(), cdata.begin());
-    static_cast<PVStringArray&>(*pvScalarArray).replace(freeze(cdata));
+    pvStructure->getSubFieldT<PVStringArray>("value.choices")->replace(freeze(cdata));
     return pvStructure;
 }
 
