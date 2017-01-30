@@ -17,3 +17,4 @@ include/
 db/
 dbd/
 .project
+RELEASE.*.Common
