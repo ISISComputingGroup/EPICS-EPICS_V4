@@ -75,6 +75,7 @@ DECONF_TARGETS = $(MODULES:%=deconf.%) $(foreach module, $(MODULES), \
 
 # Public build targets
 all: $(BUILD_TARGETS)
+install: all
 host: $(HOST_TARGETS)
 doxygen: $(DOXYGEN_TARGETS)
 python : $(PYTHON_TARGETS)
@@ -83,7 +84,8 @@ runtests: $(RUNTESTS_TARGETS)
 tapfiles: $(TAPFILES_TARGETS)
 clean: $(CLEAN_TARGETS)
 distclean: $(DISTCLEAN_TARGETS) deconf
-uninstall: distclean
+#uninstall: distclean
+uninstall:
 rebuild: clean
 	$(MAKE) all
 config: $(CONFIG_TARGETS)
