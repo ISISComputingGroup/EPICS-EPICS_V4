@@ -1,7 +1,8 @@
 bin/
 include/
 lib/
-db/
+/db/
+/*/db/
 dbd/
 configure/*.local
 html/
