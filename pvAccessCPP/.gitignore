@@ -2,7 +2,7 @@ bin/
 lib/
 doc/
 include/
-db/
+/db/
 dbd/
 html/
 documentation/html

@@ -14,7 +14,7 @@ relPaths.sh
 bin/
 lib/
 include/
-db/
+/db/
 dbd/
 .project
 RELEASE.*.Common
